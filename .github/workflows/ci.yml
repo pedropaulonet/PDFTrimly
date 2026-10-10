@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Rust checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Prepare stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Compile workspace
+        run: cargo check --workspace --locked
+      - name: Lints
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Workspace tests
+        run: cargo test --workspace --locked
+      - name: Independent engine tests
+        run: cargo test -p pdftrimly-core --locked
+      - name: Build application
+        run: cargo build --locked
+      - name: Executable smoke check
+        run: cargo run --locked -- --version

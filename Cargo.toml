@@ -1,0 +1,50 @@
+[workspace]
+members = ["crates/pdftrimly-core"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Pedro Paulo Reis"]
+license = "MIT"
+homepage = "https://dev.pedropaulo.net/pdftrimly"
+repository = "https://github.com/pedropaulonet/PDFTrimly"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[package]
+name = "pdftrimly"
+description = "Local and offline desktop PDF optimization"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+pdftrimly-core = { path = "crates/pdftrimly-core" }
+
+slint = { version = "=1.18.1", default-features = false, features = ["std", "backend-winit", "renderer-software", "compat-1-2", "unstable-winit-030"] }
+rfd = "0.15"
+sys-locale = "0.3"
+toml = "1"
+tempfile = "3"
+arboard = { version = "3.6", default-features = false, features = ["wayland-data-control"] }
+webbrowser = "1.2"
+
+[build-dependencies]
+slint-build = "=1.18.1"
+
+[lints.rust]
+# Slint-generated vtables locally allow unsafe; handwritten app code denies it.
+unsafe_code = "deny"
+
+[dev-dependencies]
+lopdf = { version = "0.45.0", default-features = false }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Use the installed runtime library without requiring development headers.
+fontique = { version = "0.11.1", default-features = false, features = ["fontconfig-dlopen"] }

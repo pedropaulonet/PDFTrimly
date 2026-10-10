@@ -1,0 +1,15 @@
+/target/
+/dist/
+/testes/
+# Local prompts for continuing development with Luna.
+/prompts-luna/
+*.AppDir/
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Cargo.lock is deliberately versioned for the application.

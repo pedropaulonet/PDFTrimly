@@ -1,0 +1,20 @@
+[package]
+name = "pdftrimly-core"
+description = "Independent PDFTrimly optimization engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+flate2 = "1"
+image = { version = "0.25.10", default-features = false, features = ["jpeg"] }
+lopdf = { version = "0.45.0", default-features = false }
+tempfile = "3"
+thiserror = "2"

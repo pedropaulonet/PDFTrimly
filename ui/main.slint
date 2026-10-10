@@ -1,0 +1,1031 @@
+
+import {
+    Button, VerticalBox, HorizontalBox, ComboBox,
+    ScrollView, ProgressIndicator, AboutSlint,
+    Palette, CheckBox, ListView
+} from "std-widgets.slint";
+
+export global Labels {
+    in-out property <string> add-folder;
+    in-out property <string> recursive;
+    in-out property <string> select-details;
+    in-out property <string> ignored-items;
+    in-out property <string> working;
+    in-out property <string> settings;
+    in-out property <string> save-settings;
+    in-out property <string> cancel;
+    in-out property <string> theme;
+    in-out property <string> system;
+    in-out property <string> theme-light;
+    in-out property <string> theme-dark;
+    in-out property <string> default-level;
+    in-out property <string> default-folder;
+    in-out property <string> no-default-folder;
+    in-out property <string> clear-default;
+    in-out property <string> settings-hint;
+    in-out property <string> copy-summary;
+    in-out property <string> open-output;
+    in-out property <string> site;
+    in-out property <string> support;
+    in-out property <string> destination;
+    in-out property <string> initial;
+    in-out property <string> subtitle;
+    in-out property <string> add;
+    in-out property <string> remove;
+    in-out property <string> clear;
+    in-out property <string> compression;
+    in-out property <string> light;
+    in-out property <string> normal;
+    in-out property <string> ultra;
+    in-out property <string> lossless;
+    in-out property <string> normal-hint;
+    in-out property <string> ultra-hint;
+    in-out property <string> folder;
+    in-out property <string> start;
+    in-out property <string> stop;
+    in-out property <string> about;
+    in-out property <string> close;
+    in-out property <string> language;
+    in-out property <string> drop-hint;
+    in-out property <string> drop-hover;
+    in-out property <string> close-question;
+    in-out property <string> close-wait;
+    in-out property <string> close-stop;
+    in-out property <string> close-back;
+    in-out property <string> empty-list;
+    in-out property <string> privacy;
+    in-out property <string> busy-hint;
+    in-out property <string> progress-hint;
+}
+
+export struct PdfRow {
+    name: string,
+    detail: string,
+    summary: string,
+    size: string
+}
+
+export component MainWindow inherits Window {
+    title: "PDFTrimly";
+    icon: @image-url("../assets/logo.svg");
+
+    preferred-width: 940px;
+    preferred-height: 820px;
+    min-width: 680px;
+    min-height: 740px;
+
+    default-font-size: 14px;
+    background: Palette.background;
+    forward-focus: add-button;
+
+    // Public API: compatible with app.rs
+    in property <string> version;
+    in-out property <bool> close-confirm;
+    in-out property <bool> settings-open;
+    in property <bool> settings-busy;
+    in property <bool> action-busy;
+    in property <bool> has-summary;
+    in property <string> notice;
+    in property <string> settings-notice;
+
+    in-out property <int> draft-language;
+    in-out property <int> draft-theme;
+    in-out property <int> draft-level: 1;
+    in-out property <string> draft-folder;
+    in-out property <int> theme-index;
+
+    in property <[PdfRow]> rows;
+    in property <bool> busy;
+    in property <bool> dialog-open;
+    in property <bool> has-destination;
+    in property <bool> stop-requested;
+    in property <string> destination;
+    in property <string> status;
+    in property <string> compact-status;
+    in-out property <bool> detail-open;
+    in property <string> selection-count;
+    in property <string> about-text;
+    in property <float> progress;
+
+    in-out property <int> selected-row: -1;
+    in property <string> selected-detail;
+    in-out property <bool> recursive;
+    in-out property <bool> draft-recursive;
+    in-out property <int> level: 1;
+    in-out property <int> language-index;
+
+    private property <bool> show-about;
+    out property <bool> modal:
+        root.close-confirm || root.show-about || root.settings-open;
+    private property <bool> editable:
+        !root.busy && !root.dialog-open && !root.modal;
+
+    // Visual design tokens
+    private property <bool> dark-mode: root.theme-index == 2;
+
+    private property <color> surface:
+        root.dark-mode ? #1e293b : #ffffff;
+
+    private property <color> soft-surface:
+        root.dark-mode ? #172235 : #f8fafc;
+
+    private property <color> line-color:
+        root.dark-mode ? #334155 : #e2e8f0;
+
+    private property <color> primary-color: #2563eb;
+
+    private property <color> muted-color:
+        root.dark-mode ? #94a3b8 : #64748b;
+
+    private property <color> heading-color:
+        root.dark-mode ? #f8fafc : #0f172a;
+
+    private property <length> list-row-height: 52px;
+
+    // Settings callbacks
+    callback open-settings();
+    callback cancel-settings();
+    callback save-settings();
+    callback settings-folder();
+
+    // External actions
+    callback copy-summary();
+    callback open-output();
+    callback open-site();
+    callback open-support();
+
+    // File operations
+    callback add-folder();
+    callback add-files();
+    callback choose-folder();
+    callback remove(int);
+    callback clear-files();
+    callback select-row(int);
+    callback language-changed(int);
+
+    // Processing
+    callback start();
+    callback stop();
+
+    // Drag and drop
+    callback can-accept-files(data-transfer) -> bool;
+    callback add-dropped-files(data-transfer);
+
+    // Closing
+    callback close-wait();
+    callback close-stop();
+    callback close-back();
+
+    // Focus and UI helpers
+    callback focus-settings();
+    focus-settings => {
+        settings-language.focus();
+    }
+
+    callback focus-close();
+    focus-close => {
+        close-back-button.focus();
+    }
+
+    callback focus-main();
+    focus-main => {
+        if root.busy {
+            list-focus.focus();
+        } else {
+            add-button.focus();
+        }
+    }
+
+    callback reset-list-scroll();
+    reset-list-scroll => {
+        files.content-y = 0px;
+    }
+
+    callback apply-theme();
+    apply-theme => {
+        Palette.color-scheme =
+            root.theme-index == 1 ? ColorScheme.light :
+            root.theme-index == 2 ? ColorScheme.dark :
+            ColorScheme.unknown;
+    }
+
+    // =================================================
+    // MAIN INTERFACE
+    // =================================================
+
+    FocusScope {
+        focus-on-tab-navigation: false;
+
+        KeyBinding {
+            keys: @keys(Control + O);
+            enabled: root.editable;
+            activated => { root.add-files(); }
+        }
+
+        KeyBinding {
+            keys: @keys(Control + Shift + O);
+            enabled: root.editable;
+            activated => { root.choose-folder(); }
+        }
+
+        VerticalBox {
+            padding: 16px;
+            spacing: 12px;
+
+            // HEADER
+            Rectangle {
+                height: 68px;
+                background: root.surface;
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: root.line-color;
+
+                HorizontalLayout {
+                    padding: 12px;
+                    spacing: 12px;
+
+                    Image {
+                        source: @image-url("../assets/logo.svg");
+                        width: 44px;
+                        height: 44px;
+                        image-fit: contain;
+                        accessible-label: "PDFTrimly";
+                        vertical-alignment: center;
+                    }
+
+                    VerticalBox {
+                        spacing: 2px;
+                        horizontal-stretch: 1;
+                        alignment: center;
+
+                        Text {
+                            text: "PDFTrimly";
+                            font-size: 23px;
+                            font-weight: 700;
+                            color: root.heading-color;
+                        }
+
+
+                    }
+
+                    settings-button := Button {
+                        text: Labels.settings;
+                        enabled: root.editable;
+                        clicked => { root.open-settings(); }
+                    }
+
+                    about-button := Button {
+                        text: Labels.about;
+                        enabled: !root.modal;
+                        clicked => {
+                            root.show-about = true;
+                            about-close.focus();
+                        }
+                    }
+                }
+            }
+
+            // DRAG AND DROP ZONE
+            drop-panel := Rectangle {
+                height: 72px;
+                border-radius: 12px;
+                border-width: 2px;
+
+                border-color:
+                    dropper.has-drag
+                    ? root.primary-color
+                    : root.line-color;
+
+                background:
+                    dropper.has-drag
+                    ? (root.dark-mode ? #1e3a5f : #eff6ff)
+                    : root.soft-surface;
+
+                VerticalLayout {
+                    padding: 8px;
+                    spacing: 8px;
+
+                    Text {
+                        text: dropper.has-drag
+                            ? Labels.drop-hover
+                            : Labels.drop-hint;
+
+                        color: dropper.has-drag
+                            ? root.primary-color
+                            : root.heading-color;
+
+                        font-size: 14px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        wrap: word-wrap;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: center;
+
+                        add-button := Button {
+                            text: Labels.add;
+                            enabled: root.editable;
+                            clicked => { root.add-files(); }
+                        }
+
+                        Button {
+                            text: Labels.add-folder;
+                            enabled: root.editable;
+                            clicked => { root.add-folder(); }
+                        }
+                    }
+                }
+
+                dropper := DropArea {
+                    enabled: root.editable;
+
+                    can-drop(event) => {
+                        root.can-accept-files(event.data)
+                            ? DragAction.copy
+                            : DragAction.none
+                    }
+
+                    dropped(event) => {
+                        root.add-dropped-files(event.data);
+                        return DragAction.copy;
+                    }
+                }
+            }
+
+            // FILE LIST CARD
+            Rectangle {
+                background: root.surface;
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: root.line-color;
+                vertical-stretch: 1;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        spacing: 10px;
+
+                        Text {
+                            text: root.selection-count;
+                            color: root.heading-color;
+                            font-size: 15px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+
+                        Button {
+                            text: Labels.clear;
+                            enabled: root.editable && root.rows.length > 0;
+                            clicked => { root.clear-files(); }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: root.line-color;
+                    }
+
+                    list-focus := FocusScope {
+                        min-height: 85px;
+                        vertical-stretch: 1;
+                        focus-on-tab-navigation: true;
+
+                        key-pressed(event) => {
+                            let next =
+                                event.text == Key.DownArrow
+                                    ? min(root.rows.length - 1, root.selected-row + 1)
+                                : event.text == Key.UpArrow
+                                    ? max(0, root.selected-row - 1)
+                                : event.text == Key.Home
+                                    ? 0
+                                : event.text == Key.End
+                                    ? root.rows.length - 1
+                                : -1;
+
+                            if next >= 0 && next < root.rows.length {
+                                root.select-row(next);
+                                root.detail-open = true;
+
+                                if next * root.list-row-height + files.content-y < 0px {
+                                    files.content-y = -next * root.list-row-height;
+                                }
+
+                                if (next + 1) * root.list-row-height + files.content-y > files.height {
+                                    files.content-y =
+                                        files.height - (next + 1) * root.list-row-height;
+                                }
+
+                                return accept;
+                            }
+
+                            return reject;
+                        }
+
+                        files := ListView {
+                            content-width: self.width - 16px;
+
+                            for row[index] in root.rows: Rectangle {
+                                height: root.list-row-height;
+                                width: files.content-width;
+                                border-radius: 6px;
+
+                                background:
+                                    index == root.selected-row
+                                        ? (root.dark-mode ? #1e3a5f : #dbeafe)
+                                        : mod(index, 2) == 0
+                                            ? root.surface
+                                            : root.soft-surface;
+
+                                HorizontalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    spacing: 12px;
+
+                                    Text {
+                                        text: row.name;
+                                        overflow: elide;
+                                        min-width: 0px;
+                                        horizontal-stretch: 1;
+                                        vertical-alignment: center;
+                                        font-weight: index == root.selected-row ? 600 : 400;
+                                        color: root.heading-color;
+                                    }
+
+                                    Text {
+                                        text: row.size;
+                                        width: 90px;
+                                        horizontal-alignment: right;
+                                        vertical-alignment: center;
+                                        color: root.muted-color;
+                                    }
+                                    Text {
+                                        text: row.summary;
+                                        width: 180px;
+                                        wrap: word-wrap;
+                                        vertical-alignment: center;
+                                        horizontal-alignment: right;
+                                        color: root.muted-color;
+                                    }
+                                }
+
+                                TouchArea {
+                                    clicked => {
+                                        list-focus.focus();
+                                        root.select-row(index);
+                                        root.detail-open = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        if root.rows.length == 0: Text {
+                            text: Labels.empty-list;
+                            x: 12px;
+                            y: 16px;
+                            width: parent.width - 24px;
+                            wrap: word-wrap;
+                            color: root.muted-color;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        Button {
+                            text: Labels.remove;
+                            enabled: root.editable && root.selected-row >= 0;
+                            clicked => { root.remove(root.selected-row); }
+                        }
+
+                        if root.detail-open: Button {
+                            text: Labels.close;
+                            clicked => { root.detail-open = false; }
+                        }
+
+                        Text {
+                            text: root.selection-count;
+                            color: root.muted-color;
+                            horizontal-alignment: right;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+                    }
+
+                    if root.detail-open && root.rows.length > 0: ScrollView {
+                        height: 64px;
+                        content-width: self.width - 16px;
+
+                        Text {
+                            text: root.selected-detail;
+                            color: root.muted-color;
+                            font-size: 12px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+            }
+
+            // COMPRESSION SETTINGS
+            Rectangle {
+                background: root.surface;
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: root.line-color;
+                height: 112px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        spacing: 12px;
+
+                        Text {
+                            text: Labels.compression;
+                            color: root.heading-color;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+
+                        ComboBox {
+                            model: [
+                                Labels.light,
+                                Labels.normal,
+                                Labels.ultra
+                            ];
+                            current-index <=> root.level;
+                            enabled: root.editable;
+                        }
+
+                        Text {
+                            text: root.level == 0
+                                ? Labels.lossless
+                                : root.level == 1
+                                    ? Labels.normal-hint
+                                    : Labels.ultra-hint;
+
+                            color: root.muted-color;
+                            font-size: 12px;
+                            wrap: word-wrap;
+                            min-width: 0px;
+                            horizontal-stretch: 1;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 12px;
+
+                        Button {
+                            text: Labels.folder;
+                            enabled: root.editable;
+                            clicked => { root.choose-folder(); }
+                        }
+
+                        Text {
+                            text: root.has-destination
+                                ? root.destination
+                                : Labels.destination;
+
+                            color: root.muted-color;
+                            wrap: word-wrap;
+                            min-width: 0px;
+                            horizontal-stretch: 1;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // PROCESSING STATUS
+            Rectangle {
+                background: root.surface;
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: root.line-color;
+                height: root.dialog-open ? 152px : 124px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    if root.dialog-open: Text {
+                        text: Labels.working;
+                        color: root.muted-color;
+                    }
+
+                    ProgressIndicator {
+                        progress: root.progress;
+                    }
+
+                    ScrollView {
+                        content-width: self.width - 16px;
+
+                        Text {
+                            text: root.compact-status;
+                            color: root.heading-color;
+                            wrap: word-wrap;
+                            vertical-alignment: top;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        Button {
+                            text: Labels.start;
+                            primary: true;
+                            horizontal-stretch: 2;
+                            min-height: 40px;
+                            enabled: root.editable && root.rows.length > 0;
+                            clicked => { root.start(); }
+                        }
+
+                        Button {
+                            text: Labels.stop;
+                            enabled: root.busy
+                                && !root.stop-requested
+                                && !root.modal;
+                            clicked => { root.stop(); }
+                        }
+
+                        Button {
+                            text: Labels.copy-summary;
+                            enabled: root.has-summary
+                                && !root.busy
+                                && !root.modal
+                                && !root.action-busy;
+                            clicked => { root.copy-summary(); }
+                        }
+
+                        Button {
+                            text: Labels.open-output;
+                            enabled: root.has-destination
+                                && !root.modal
+                                && !root.action-busy;
+                            clicked => { root.open-output(); }
+                        }
+                    }
+                }
+            }
+
+            // FOOTER
+            if root.notice != "": Text {
+                text: root.notice;
+                color: root.muted-color;
+                wrap: word-wrap;
+                font-size: 12px;
+            }
+
+            Text {
+                text: Labels.privacy;
+                font-size: 11px;
+                color: root.muted-color;
+                wrap: word-wrap;
+                horizontal-alignment: center;
+            }
+        }
+    }
+
+    // =================================================
+    // CLOSE CONFIRMATION
+    // =================================================
+
+    Rectangle {
+        visible: root.close-confirm;
+        background: #00000088;
+
+        TouchArea {}
+
+        FocusScope {
+            focus-on-tab-navigation: false;
+
+            capture-key-pressed(event) => {
+                if event.text == Key.Escape {
+                    root.close-back();
+                    return accept;
+                }
+                return reject;
+            }
+
+            Rectangle {
+                x: (root.width - self.width) / 2;
+                y: (root.height - self.height) / 2;
+                width: min(root.width - 40px, 500px);
+                height: 250px;
+
+                background: root.surface;
+                border-radius: 14px;
+                border-width: 1px;
+                border-color: root.line-color;
+
+                VerticalBox {
+                    padding: 24px;
+                    spacing: 12px;
+
+                    Text {
+                        text: Labels.close-question;
+                        wrap: word-wrap;
+                        font-weight: 600;
+                        font-size: 17px;
+                        color: root.heading-color;
+                    }
+
+                    Button {
+                        text: Labels.close-wait;
+                        enabled: root.close-confirm;
+                        clicked => { root.close-wait(); }
+                    }
+
+                    Button {
+                        text: Labels.close-stop;
+                        enabled: root.close-confirm;
+                        clicked => { root.close-stop(); }
+                    }
+
+                    close-back-button := Button {
+                        text: Labels.close-back;
+                        enabled: root.close-confirm;
+                        clicked => { root.close-back(); }
+                    }
+                }
+            }
+        }
+    }
+
+    // =================================================
+    // ABOUT DIALOG
+    // =================================================
+
+    Rectangle {
+        visible: root.show-about && !root.close-confirm;
+        background: #00000088;
+
+        TouchArea {}
+
+        FocusScope {
+            focus-on-tab-navigation: false;
+
+            capture-key-pressed(event) => {
+                if event.text == Key.Escape {
+                    root.show-about = false;
+                    about-button.focus();
+                    return accept;
+                }
+                return reject;
+            }
+
+            Rectangle {
+                x: (root.width - self.width) / 2;
+                y: (root.height - self.height) / 2;
+                width: min(root.width - 40px, 560px);
+                height: min(root.height - 40px, 470px);
+
+                background: root.surface;
+                border-radius: 14px;
+                border-width: 1px;
+                border-color: root.line-color;
+
+                VerticalBox {
+                    padding: 24px;
+                    spacing: 16px;
+
+                    Text {
+                        text: "PDFTrimly";
+                        font-size: 23px;
+                        font-weight: 700;
+                        color: root.heading-color;
+                    }
+
+                    ScrollView {
+                        content-width: self.width - 16px;
+
+                        VerticalBox {
+                            spacing: 12px;
+
+                            Text {
+                                text: root.about-text;
+                                wrap: word-wrap;
+                                color: root.heading-color;
+                            }
+
+                            AboutSlint {}
+                        }
+                    }
+
+                    HorizontalBox {
+                        Button {
+                            text: Labels.site;
+                            enabled: root.show-about && !root.action-busy;
+                            clicked => { root.open-site(); }
+                        }
+
+                        Button {
+                            text: Labels.support;
+                            enabled: root.show-about && !root.action-busy;
+                            clicked => { root.open-support(); }
+                        }
+                    }
+
+                    if root.notice != "": Text {
+                        text: root.notice;
+                        wrap: word-wrap;
+                        color: root.muted-color;
+                    }
+
+                    about-close := Button {
+                        text: Labels.close;
+                        enabled: root.show-about && !root.close-confirm;
+                        clicked => {
+                            root.show-about = false;
+                            about-button.focus();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // =================================================
+    // SETTINGS DIALOG
+    // =================================================
+
+    Rectangle {
+        visible: root.settings-open;
+        background: #00000088;
+
+        TouchArea {}
+
+        FocusScope {
+            focus-on-tab-navigation: false;
+
+            capture-key-pressed(event) => {
+                if event.text == Key.Escape && !root.settings-busy {
+                    root.cancel-settings();
+                    return accept;
+                }
+                return reject;
+            }
+
+            Rectangle {
+                x: (root.width - self.width) / 2;
+                y: (root.height - self.height) / 2;
+                width: min(root.width - 40px, 560px);
+                height: min(root.height - 40px, 520px);
+
+                background: root.surface;
+                border-radius: 14px;
+                border-width: 1px;
+                border-color: root.line-color;
+
+                VerticalBox {
+                    padding: 24px;
+                    spacing: 14px;
+
+                    Text {
+                        text: Labels.settings;
+                        font-size: 22px;
+                        font-weight: 700;
+                        color: root.heading-color;
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: root.line-color;
+                    }
+
+                    ScrollView {
+                        content-width: self.width - 16px;
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Text {
+                                text: Labels.language;
+                                color: root.heading-color;
+                                font-weight: 600;
+                            }
+
+                            settings-language := ComboBox {
+                                model: [
+                                    Labels.system,
+                                    "English",
+                                    "Português (Brasil)",
+                                    "Français",
+                                    "Español",
+                                    "Italiano"
+                                ];
+                                current-index <=> root.draft-language;
+                                enabled: !root.settings-busy;
+                            }
+
+                            Text {
+                                text: Labels.theme;
+                                color: root.heading-color;
+                                font-weight: 600;
+                            }
+
+                            ComboBox {
+                                model: [
+                                    Labels.system,
+                                    Labels.theme-light,
+                                    Labels.theme-dark
+                                ];
+                                current-index <=> root.draft-theme;
+                                enabled: !root.settings-busy;
+                            }
+
+                            Text {
+                                text: Labels.default-level;
+                                color: root.heading-color;
+                                font-weight: 600;
+                            }
+
+                            ComboBox {
+                                model: [
+                                    Labels.light,
+                                    Labels.normal,
+                                    Labels.ultra
+                                ];
+                                current-index <=> root.draft-level;
+                                enabled: !root.settings-busy;
+                            }
+
+                            CheckBox {
+                                text: Labels.recursive;
+                                checked <=> root.draft-recursive;
+                                enabled: !root.settings-busy;
+                            }
+
+                            Text {
+                                text: Labels.default-folder;
+                                color: root.heading-color;
+                                font-weight: 600;
+                            }
+
+                            Text {
+                                text: root.draft-folder == ""
+                                    ? Labels.no-default-folder
+                                    : root.draft-folder;
+                                color: root.muted-color;
+                                wrap: word-wrap;
+                            }
+
+                            HorizontalBox {
+                                Button {
+                                    text: Labels.folder;
+                                    enabled: !root.settings-busy;
+                                    clicked => { root.settings-folder(); }
+                                }
+
+                                Button {
+                                    text: Labels.clear-default;
+                                    enabled: !root.settings-busy;
+                                    clicked => { root.draft-folder = ""; }
+                                }
+                            }
+
+                            Text {
+                                text: Labels.settings-hint;
+                                color: root.muted-color;
+                                wrap: word-wrap;
+                            }
+
+                            if root.settings-notice != "": Text {
+                                text: root.settings-notice;
+                                color: root.muted-color;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+
+                    HorizontalBox {
+                        spacing: 10px;
+
+                        Button {
+                            text: root.settings-busy
+                                ? Labels.working
+                                : Labels.save-settings;
+                            primary: true;
+                            enabled: !root.settings-busy;
+                            clicked => { root.save-settings(); }
+                        }
+
+                        Button {
+                            text: Labels.cancel;
+                            enabled: !root.settings-busy;
+                            clicked => { root.cancel-settings(); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
