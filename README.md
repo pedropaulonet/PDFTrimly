@@ -1,107 +1,84 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="PDFTrimly logo" width="96">
+</p>
+
 # PDFTrimly
 
-PDFTrimly is a desktop application under development for local, offline PDF compression
-on Windows and Linux, developed by Pedro Paulo Reis.
+Local, offline PDF compression for Linux and Windows, developed by Pedro Paulo Reis.
 
-**Status: engine and desktop interface in development (0.1.0).** The command-line
-executable optimizes streams and eligible scan images, preserves existing OCR,
-validates the rewritten structure and reports measured savings. The desktop
-UI is available for Linux with multiple-file selection and sequential batch
-processing, PDF/folder drag-and-drop and five embedded interface/CLI languages.
-Settings persist language, System/Light/Dark theme, compression level and output
-folder and recursive discovery defaults. Folder inputs preserve relative
-subdirectories, exclude the destination and deduplicate paths. A compact list
-keeps full paths and results in a separate detail panel. Results can be copied and the output folder opened.
-Windows EXE and Linux DEB/AppImage packaging is configured in GitHub Actions.
+[Website](https://made.pedropaulo.net/projects/pdftrimly/) · [Packaging and installation](docs/packaging.md) · [Release checklist](docs/first-release.md)
 
-## Project structure
+PDFTrimly optimizes PDF streams and eligible scan images while preserving existing
+searchable text and OCR. It processes files on your computer and leaves originals
+untouched.
 
-- `src/main.rs`: application entry point.
-- `crates/pdftrimly-core`: independent engine, stream optimization and validation.
-- `assets/logo.svg`: original project logo.
-- `i18n/`: embedded English, Brazilian Portuguese, French, Spanish and Italian catalogs.
-- `src/gui_state.rs`: language-independent batch state and channel handling.
-- `src/config.rs` and `src/settings.rs`: versioned preferences and settings flow.
-- `src/desktop.rs` and `src/actions.rs`: clipboard, folder and product links.
-- `.github/workflows/ci.yml`: Linux and Windows compilation and checks.
-- `.github/workflows/packages.yml`: Windows EXE and Linux DEB/AppImage builds.
-- `scripts/build-local.sh`: local release build helper.
-- `docs/`: architecture, dependency decisions and implementation stages.
+![PDFTrimly desktop interface](assets/screenshot.png)
 
-The application depends on the core crate. The core must remain independent
-of the UI, filesystem dialogs and application settings.
+- Desktop interface with multiple files, folders, drag-and-drop and batch results.
+- Light, Normal and Ultra compression levels.
+- English, Brazilian Portuguese, French, Spanish and Italian interfaces.
+- Saved language, theme, output folder and compression preferences.
+- Command-line interface for individual files.
 
-## Build and run
+**0.1.1 is in release preparation.** Linux DEB/AppImage and Windows portable ZIP
+packaging is configured. Installation and startup in clean Linux and Windows
+systems still require the [verification procedure](docs/clean-install.md).
 
-Install Rust stable with Cargo, rustfmt and Clippy using
-[rustup](https://rustup.rs/). From the repository root:
+## Installation
+
+Download the platform artifact from a successful **Actions → Build packages** run
+and extract the ZIP. Keep the Windows executable together with `LICENSE` and
+`licenses/`. The Windows executable is unsigned.
+
+On Ubuntu 24.04 x86_64:
+
+```sh
+sudo apt install ./pdftrimly_0.1.1_amd64.deb
+pdftrimly
+```
+
+For AppImage setup, platform requirements and checksum verification, see the
+[packaging guide](docs/packaging.md). Tags prepare a draft for review; they do
+not publish automatically.
+
+## Usage
+
+Open PDFTrimly, select PDFs or a folder, choose an output folder and compression
+level, then start the batch. Light preserves image data. Normal and Ultra may
+reduce image quality. Unsupported images are preserved; encrypted and digitally
+signed PDFs are rejected. Stopping a batch lets the current file finish.
+
+```sh
+pdftrimly --version
+pdftrimly compress "input.pdf" "output.pdf" --level normal
+```
+
+See [folder input](docs/folder-input.md) and [settings](docs/settings.md) for details.
+Visual equivalence across arbitrary PDFs has not been established; check outputs
+before using them in place of a working copy.
+
+## Development
+
+Install [Rust stable](https://rustup.rs/), then run from the repository root:
 
 ```sh
 cargo build --workspace --locked
-cargo run --locked -- --version
-cargo run --locked -- --help
-cargo run --locked # open desktop interface
-cargo run --locked -- compress "input.pdf" "output.pdf" --level normal
-```
-
-Saved preferences select startup defaults. On first startup, the system locale
-selects the initial language with English fallback.
-`PDFTRIMLY_LANG=pt-BR cargo run --locked` explicitly selects a language.
-The main-window choice lasts for the session; Settings saves startup defaults.
-See the [folder input guide](docs/folder-input.md) for discovery rules.
-See the [settings guide](docs/settings.md) for storage and recovery.
-
-On Linux, `bash scripts/build-local.sh` builds the release executable.
-Download build packages from the **Build packages** workflow's **Artifacts**
-section after a successful run. See the [packaging guide](docs/packaging.md).
-Pushing a matching `v<version>` tag also publishes the executable packages to
-GitHub Releases after both platform builds succeed. Versions `0.x` are prereleases.
-No published stable releases are available at this stage. See the
-[Linux interface guide](docs/linux-interface.md) for operation and limitations.
-
-## Development checks
-
-```sh
+cargo run --locked
 cargo fmt --all -- --check
-cargo check --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
-cargo test -p pdftrimly-core --locked
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
-Integration tests exercise real PDF files, original preservation, searchable
-text, shared page content, existing outputs, encryption, signature fields,
-resource limits and unsupported stream filters. See the
-[proof-of-concept report](docs/proof-of-concept.md) for results and limits.
+The independent engine lives in `crates/pdftrimly-core`; desktop code is in `src/`
+and `ui/`. See [architecture](docs/architecture.md) and [dependency review](docs/dependencies.md).
+Never commit private PDF fixtures.
 
-## Roadmap and constraints
+## License
 
-Light preserves image data; Normal (default) targets 150 effective DPI and
-JPEG quality 80; Ultra targets 96 DPI and quality 60. Normal and Ultra change
-image quality. Text, including invisible OCR, remains intact. Unsupported
-images, masks and complex color spaces are preserved. See
-[image optimization results](docs/image-optimization.md).
+Project-authored code is licensed under [MIT](LICENSE). Dependencies retain their
+own licenses. Slint uses its royalty-free desktop license, with attribution in
+the About dialog. Distribution notices and remaining review items are documented
+in the [dependency review](docs/dependencies.md).
 
-The next milestone is complete graphical verification and broader validation
-with representative real-world PDFs. In-file cancellation and broader package
-installation verification are still pending. See the
-[first release checklist](docs/first-release.md) and [language guide](docs/i18n.md).
-See [architecture](docs/architecture.md).
-
-Processing must remain offline and must never modify the original PDF.
-Encrypted and digitally signed documents require explicit handling. The
-engine must report unchanged or larger results honestly and preserve
-searchable text and supported document features.
-
-## License and dependencies
-
-Project-authored source code is licensed under MIT. The engine uses `lopdf`,
-`flate2`, `image`, `tempfile` and `thiserror`. The desktop interface uses Slint and rfd. See
-[dependency decisions](docs/dependencies.md) for license metadata and the
-remaining distribution review.
-
-Contributions should follow the staged specification and include checks
-appropriate to the behavior changed. Never commit private document fixtures.
-
-[Website](https://made.pedropaulo.net/projects/pdftrimly/) ·
-[Support on Ko-fi](https://ko-fi.com/pedropaulo)
+[Support development on Ko-fi](https://ko-fi.com/pedropaulo)

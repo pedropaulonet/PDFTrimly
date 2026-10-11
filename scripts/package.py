@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -41,17 +42,21 @@ def copy(source, target, executable=False):
     target.chmod(0o755 if executable else 0o644)
 
 
-def notices(metadata, destination):
+def notices(metadata, destination, active):
     destination.mkdir(parents=True, exist_ok=True)
     copy(ROOT / "assets/licenses/appimage-runtime.txt", destination / "appimage-runtime.txt")
     lines = ["PDFTrimly third-party dependencies", "",
-             "Includes build dependencies. License declarations are from Cargo metadata.",
+             "Includes active build/test dependencies for the selected target (a conservative superset).",
+             "License declarations are metadata, not proof of distribution compliance.",
              "Slint: Royalty-free Desktop, Mobile and Web Applications License.",
              "The GUI includes AboutSlint attribution. See the bundled Slint license texts.", ""]
     workspace = set(metadata["workspace_members"])
+    missing = []
+    count = 0
     for package in sorted(metadata["packages"], key=lambda p: (p["name"], p["version"])):
-        if package["id"] in workspace:
+        if package["id"] in workspace or (package["name"], package["version"]) not in active:
             continue
+        count += 1
         base = Path(package["manifest_path"]).parent
         name = f'{package["name"]}-{package["version"]}'
         lines.extend([name, f'License: {package.get("license") or "See license files"}',
@@ -61,16 +66,33 @@ def notices(metadata, destination):
             relative = path.relative_to(base)
             if len(relative.parts) > 3 or not path.is_file():
                 continue
-            if path.name.upper().startswith(("LICENSE", "LICENCE", "COPYING", "NOTICE", "UNLICENSE")):
+            if (path.name.upper().startswith(("LICENSE", "LICENCE", "COPYING", "NOTICE", "UNLICENSE"))
+                    or any(part.upper() in ("LICENSES", "LICENCES") for part in relative.parts[:-1])):
                 candidates.add(path)
         if package.get("license_file"):
             candidates.add(base / package["license_file"])
         for path in sorted(candidates):
             copy(path, destination / name / path.relative_to(base))
-        if not candidates:
+        supplement = ROOT / "assets/licenses/supplemental" / name
+        if supplement.is_dir():
+            provenance = json.loads((supplement / "PROVENANCE.json").read_text(encoding="utf-8"))
+            for filename, checksum in provenance["files"].items():
+                path = supplement / filename
+                if hashlib.sha256(path.read_bytes()).hexdigest() != checksum:
+                    raise RuntimeError(f"Supplemental license checksum mismatch: {name}/{filename}")
+                copy(path, destination / name / filename)
+            copy(supplement / "PROVENANCE.json", destination / name / "PROVENANCE.json")
+            lines.append(f'Supplemental license source: {provenance["source"]}')
+        if not candidates and not supplement.is_dir():
             lines.append("No separate license file included in the crate archive.")
+            missing.append(name)
         lines.append("")
     (destination / "THIRD-PARTY-NOTICES.txt").write_text("\n".join(lines), encoding="utf-8")
+    (destination / "NOTICE-AUDIT.json").write_text(json.dumps({
+        "dependency_count": count,
+        "missing_license_files": missing,
+        "scope": "Active Cargo tree including build/test dependencies; manual review still required",
+    }, indent=2) + "\n", encoding="utf-8")
 
 
 def install_tree(binary, tree, license_dir):
@@ -152,7 +174,7 @@ def appimage(binary, version, output, license_dir, linuxdeploy, runtime):
         for library in (tree / "usr/lib").glob("*.so*"):
             original = library_paths.get(library.name)
             if original is None:
-                continue
+                raise RuntimeError(f"No system-library provenance for bundled library: {library.name}")
             # Account for both pre-usrmerge and usrmerge package-file listings.
             owner = None
             paths = {str(original), str(original.resolve())}
@@ -182,6 +204,8 @@ def main():
     parser.add_argument("platform", choices=("linux", "windows"))
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--metadata", type=Path, required=True)
+    parser.add_argument("--dependency-tree", type=Path, required=True,
+                        help="cargo tree --locked --target TARGET --prefix none --format '{p}' output")
     parser.add_argument("--linuxdeploy", type=Path)
     parser.add_argument("--runtime", type=Path)
     parser.add_argument("--output", type=Path, default=ROOT / "dist/artifacts")
@@ -196,7 +220,10 @@ def main():
     licenses = output / "licenses"
     if licenses.exists():
         raise RuntimeError("Use a fresh output directory for each packaging run")
-    notices(metadata, licenses)
+    active = set(re.findall(r"^(\S+) v(\S+)", args.dependency_tree.read_text(encoding="utf-8"), re.M))
+    if (package["name"], version) not in active:
+        raise RuntimeError("Dependency tree does not contain the workspace package/version")
+    notices(metadata, licenses, active)
     copy(ROOT / "LICENSE", output / "LICENSE")
     if args.platform == "windows":
         copy(binary, output / "pdftrimly.exe", executable=True)
@@ -207,8 +234,8 @@ def main():
             raise RuntimeError("--linuxdeploy and --runtime are required for Linux packaging")
         appimage(binary, version, output, licenses, args.linuxdeploy.resolve(strict=True),
                  args.runtime.resolve(strict=True))
-    sums = [f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}"
-            for p in sorted(output.iterdir()) if p.is_file() and p.name != "SHA256SUMS"]
+    sums = [f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(output).as_posix()}"
+            for p in sorted(output.rglob("*")) if p.is_file() and p != output / "SHA256SUMS"]
     (output / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8")
 
 

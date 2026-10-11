@@ -1,8 +1,7 @@
 # O que falta para a primeira versão
 
-Revisão do código em 10/10/2026. A versão no Cargo
-é 0.1.0, mas isso é um número de desenvolvimento; o projeto ainda não cumpre
-os critérios completos de distribuição da especificação.
+Preparação da **0.1.1**, revisada em 11/10/2026. Cargo e lockfile estão em
+0.1.1; isso não indica publicação ou aprovação dos critérios de distribuição.
 
 ## Estado implementado
 
@@ -58,13 +57,24 @@ O workflow `packages.yml` gera EXE para Windows e DEB/AppImage para Linux x86_64
 com desktop entry, ícone SVG, metadados, textos de licença e checksums. Ele roda
 em push para `main`, tags `v*` ou acionamento manual, disponibilizando artefatos
 por 30 dias. Confira [packaging.md](packaging.md).
-Tags `v<versão>` publicam os pacotes automaticamente em GitHub Releases após
-ambos os builds; versões 0.x são pré-releases.
-Faltam ícones raster e ensaios em ambientes limpos. Também
-falta concluir a auditoria dos textos de licença/avisos das dependências para
-redistribuição, incluindo Slint. O código e `Cargo.lock` estão versionados.
-Critério: artefatos reproduzíveis, instalação e
-startup documentados em Linux e Windows e termos de distribuição atendidos.
+Tags `v<versão>` agora preparam somente um rascunho. Windows deve ser
+distribuído com o ZIP completo; os checksums incluem textos e avisos.
+A coleta usa a árvore ativa por plataforma e gera `NOTICE-AUDIT.json`;
+bibliotecas do AppImage sem origem identificada interrompem o empacotamento.
+Veja a auditoria e as limitações em [dependencies.md](dependencies.md).
+
+O [roteiro em ambientes limpos](clean-install.md) define a matriz e o registro
+reproduzível de instalação, inicialização e operação. **Ainda não executado**
+em VMs limpas Linux/Windows. A revisão completa do runtime AppImage e das
+bibliotecas nativas continua necessária. Critério: avisos completos e evidência
+por artefato; nenhum teste do runner substitui instalação na VM.
+
+## Verificações da preparação 0.1.1
+
+Consulte [release-0.1.1-verification.md](release-0.1.1-verification.md) para os
+comandos executados, os 69 testes Rust, a coleta de avisos por plataforma e o
+ensaio local de construção/extração do DEB. Não houve instalação em VM limpa,
+execução Windows ou construção do AppImage nesta revisão.
 
 ## Evidência adicional do fluxo GUI
 
@@ -79,6 +89,6 @@ de conclusão do roteiro manual em Linux/Windows.
 Primeiro concluir a verificação gráfica ponta a ponta e corrigir o que ela
 revelar, incluindo clipboard, tema, links e preferências em ambiente nativo.
 A próxima implementação recomendada é cancelamento cooperativo dentro do
-PDF. Empacotamento pode seguir como entrega própria. A publicação da 0.1.0 deve aguardar os
+PDF. Empacotamento pode seguir como entrega própria. A publicação da 0.1.1 deve aguardar os
 critérios da especificação ou uma decisão explícita de reduzir o escopo do
 primeiro lançamento e documentar o novo escopo.

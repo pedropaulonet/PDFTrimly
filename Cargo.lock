@@ -3248,7 +3248,7 @@ dependencies = [
 
 [[package]]
 name = "pdftrimly"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arboard",
  "fontique",
@@ -3265,7 +3265,7 @@ dependencies = [
 
 [[package]]
 name = "pdftrimly-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flate2",
  "image",

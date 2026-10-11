@@ -34,6 +34,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends dpkg-dev desktop-file-utils file patchelf libfontconfig1 libx11-6 libx11-xcb1 libxcursor1 libxrandr2 libxi6 libxfixes3 libxrender1 libxcb1 libwayland-client0 libwayland-cursor0 libwayland-egl1 libxkbcommon0 libxkbcommon-x11-0
       - name: Test workspace
         run: cargo test --workspace --locked
+      - name: Packaging regression checks
+        run: python -m unittest discover -s scripts -p "test_*.py"
       - name: Build optimized executable
         run: cargo build --release --locked
       - name: Dependency metadata
@@ -41,9 +43,10 @@ jobs:
         run: |
           mkdir -p dist
           cargo metadata --locked --format-version 1 --filter-platform '${{ matrix.target }}' > dist/metadata.json
+          cargo tree --locked --target '${{ matrix.target }}' --prefix none --format '{p}' > dist/dependency-tree.txt
       - name: Package Windows executable
         if: runner.os == 'Windows'
-        run: python scripts/package.py windows --metadata dist/metadata.json
+        run: python scripts/package.py windows --metadata dist/metadata.json --dependency-tree dist/dependency-tree.txt
       - name: Package Linux DEB and AppImage
         if: runner.os == 'Linux'
         env:
@@ -52,7 +55,7 @@ jobs:
           desktop-file-validate assets/pdftrimly.desktop
           curl --fail --location --retry 3 https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage -o dist/linuxdeploy.AppImage
           curl --fail --location --retry 3 -H 'Accept: application/octet-stream' https://api.github.com/repos/AppImage/type2-runtime/releases/assets/596078161 -o dist/appimage-runtime
-          python3 scripts/package.py linux --metadata dist/metadata.json --linuxdeploy dist/linuxdeploy.AppImage --runtime dist/appimage-runtime
+          python3 scripts/package.py linux --metadata dist/metadata.json --dependency-tree dist/dependency-tree.txt --linuxdeploy dist/linuxdeploy.AppImage --runtime dist/appimage-runtime
       - name: Upload executable packages
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -62,7 +65,7 @@ jobs:
           retention-days: 30
 
   release:
-    name: Publish GitHub release
+    name: Prepare GitHub release draft
     needs: package
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
@@ -90,13 +93,12 @@ jobs:
           (cd packages/windows && sha256sum --check SHA256SUMS)
           (cd packages/linux && sha256sum --check SHA256SUMS)
           mkdir release
-          cp packages/windows/pdftrimly.exe release/
           cp "packages/linux/pdftrimly_${version}_amd64.deb" release/
           cp "packages/linux/PDFTrimly-${version}-x86_64.AppImage" release/
           cp packages/windows/LICENSE release/
           python3 -c 'import os, shutil; shutil.make_archive("release/PDFTrimly-" + os.environ["RELEASE_TAG"] + "-windows-x86_64", "zip", "packages/windows")'
-          (cd release && sha256sum pdftrimly.exe *.deb *.AppImage *.zip LICENSE > SHA256SUMS)
-      - name: Publish release with all executables
+          (cd release && sha256sum *.deb *.AppImage *.zip LICENSE > SHA256SUMS)
+      - name: Prepare draft for distribution review
         run: |
           set -euo pipefail
           if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > release-state; then
@@ -112,4 +114,4 @@ jobs:
           if [[ "$RELEASE_TAG" == v0.* || "$RELEASE_TAG" == *-* ]]; then
             prerelease=true
           fi
-          gh release edit "$RELEASE_TAG" --draft=false --prerelease="$prerelease"
+          gh release edit "$RELEASE_TAG" --draft=true --prerelease="$prerelease"
