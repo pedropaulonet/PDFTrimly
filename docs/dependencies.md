@@ -125,6 +125,7 @@ or embedded component was approved. Before public binary distribution:
 - Execute [clean-install.md](clean-install.md) on the finished artifacts and
   preserve the evidence. No clean Linux/Windows VM install was executed here.
 
-The workflow prepares drafts only. These remaining checks must be completed
-before a human publishes a release; this revision neither publishes nor certifies
-license compliance.
+The author subsequently authorized tag-triggered publication. The workflow now
+uploads packages and publishes after both builds; existing release assets with
+the same names are replaced. That authorization does not constitute verification
+of the remaining checks or certification of license compliance.

@@ -57,7 +57,7 @@ O workflow `packages.yml` gera EXE para Windows e DEB/AppImage para Linux x86_64
 com desktop entry, ícone SVG, metadados, textos de licença e checksums. Ele roda
 em push para `main`, tags `v*` ou acionamento manual, disponibilizando artefatos
 por 30 dias. Confira [packaging.md](packaging.md).
-Tags `v<versão>` agora preparam somente um rascunho. Windows deve ser
+Tags `v<versão>` publicam após os dois builds, conforme autorização do autor. Windows deve ser
 distribuído com o ZIP completo; os checksums incluem textos e avisos.
 A coleta usa a árvore ativa por plataforma e gera `NOTICE-AUDIT.json`;
 bibliotecas do AppImage sem origem identificada interrompem o empacotamento.

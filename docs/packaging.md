@@ -10,17 +10,17 @@ A versão dos nomes vem do Cargo. O workflow roda ao enviar alterações para
 Abra a execução concluída e baixe **Artifacts**. O GitHub entrega um ZIP por
 plataforma, retido por 30 dias.
 
-Uma tag `v<versão>` prepara um **rascunho**, após os dois builds e a
-conferência de checksums. O workflow não publica automaticamente. A versão da
+Uma tag `v<versão>` publica a release após os dois builds e a
+conferência de checksums. Versões 0.x são marcadas como pré-release. A versão da
 tag precisa corresponder ao Cargo: os nomes Linux são conferidos ao montar
-os arquivos. O rascunho inclui DEB, AppImage, ZIP Windows completo, LICENSE e
+os arquivos. A release inclui DEB, AppImage, ZIP Windows completo, LICENSE e
 SHA256SUMS; não oferece EXE avulso sem os avisos. Push para `main` e execução
-manual geram somente artefatos. Nenhuma tag ou release foi criada nesta revisão.
+manual geram somente artefatos. A publicação depende da execução bem-sucedida do workflow no GitHub.
 
-Antes de publicar manualmente, conclua a [auditoria de dependências](dependencies.md)
-e o [ensaio em ambientes limpos](clean-install.md). Reexecutar o job pode completar
-um rascunho; uma release já publicada é preservada. O job usa `GITHUB_TOKEN`,
-com escrita limitada ao job de preparação do rascunho.
+Antes de enviar a tag, confira a [auditoria de dependências](dependencies.md)
+e o [ensaio em ambientes limpos](clean-install.md). Reexecutar o job também anexa os pacotes a uma release já publicada; arquivos
+com o mesmo nome são substituídos pelos artefatos daquela execução. O job usa `GITHUB_TOKEN`,
+com escrita limitada ao job de publicação.
 
 ## Uso
 

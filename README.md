@@ -38,8 +38,8 @@ pdftrimly
 ```
 
 For AppImage setup, platform requirements and checksum verification, see the
-[packaging guide](docs/packaging.md). Tags prepare a draft for review; they do
-not publish automatically.
+[packaging guide](docs/packaging.md). Version tags publish a GitHub prerelease for 0.x after both platform builds
+succeed.
 
 ## Usage
 
