@@ -1,7 +1,10 @@
 """Regression checks for dependency notice collection (stdlib only)."""
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -11,6 +14,30 @@ spec.loader.exec_module(package)
 
 
 class NoticesTests(unittest.TestCase):
+    def test_supplement_hashes_survive_windows_style_git_checkout(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'source'
+            source.mkdir()
+            shutil.copytree(package.ROOT / 'assets/licenses/supplemental',
+                            source / 'assets/licenses/supplemental')
+            attributes = package.ROOT / '.gitattributes'
+            if attributes.is_file():
+                shutil.copyfile(attributes, source / '.gitattributes')
+            def git(*args):
+                subprocess.run(['git', *args], cwd=source, check=True, capture_output=True)
+            git('init', '--quiet')
+            git('-c', 'core.autocrlf=false', 'add', '.')
+            git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
+                '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'Fixture')
+            checkout = root / 'checkout'
+            git('-c', 'core.autocrlf=true', 'clone', '--quiet', '--no-local',
+                str(source), str(checkout))
+            for provenance in checkout.glob('assets/licenses/supplemental/*/PROVENANCE.json'):
+                for filename, expected in json.loads(provenance.read_text(encoding='utf-8'))['files'].items():
+                    self.assertEqual(hashlib.sha256((provenance.parent / filename).read_bytes()).hexdigest(),
+                                     expected, str(provenance.parent.name))
+
     def test_missing_license_is_reported_and_inactive_crates_are_excluded(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
