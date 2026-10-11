@@ -485,7 +485,15 @@ fn result_actions_pass_exact_summary_path_and_product_links_to_desktop() {
     let calls = desktop.calls.lock().unwrap();
     assert_eq!(calls[1], format!("folder:{}", dir.path().display()));
     assert_eq!(calls[2], crate::desktop::SITE);
-    assert_eq!(calls[3], crate::desktop::SUPPORT);
+    assert_eq!(calls[3], crate::desktop::SUPPORT_PIX);
+    drop(calls);
+    assert!(ui.get_about_text().contains("livepix.gg/pedropaulo"));
+    assert_eq!(ui.global::<Labels>().get_support(), "Apoiar com um Pix");
+    ui.invoke_language_changed(Language::English as i32);
+    ui.invoke_open_support();
+    until(|| !ui.get_action_busy());
+    assert_eq!(desktop.calls.lock().unwrap()[4], crate::desktop::SUPPORT);
+    assert!(ui.get_about_text().contains("ko-fi.com/pedropaulo"));
     ui.hide().unwrap();
 }
 
@@ -573,6 +581,61 @@ fn settings_render_in_all_languages_sizes_and_themes() {
                     file.write_all(&pixels).unwrap();
                 }
             }
+        }
+    }
+    ui.hide().unwrap();
+}
+
+#[test]
+fn brand_title_renders_in_main_window_and_about() {
+    use std::io::Write;
+    let ui = window(Arc::new(ScriptedPicker::default()));
+    ui.invoke_language_changed(Language::Portuguese as i32);
+    ui.set_theme_index(1);
+    ui.invoke_apply_theme();
+    ui.window().set_size(slint::PhysicalSize::new(680, 800));
+    for about in [false, true] {
+        if about {
+            let position = slint::LogicalPosition::new(610.0, 50.0);
+            ui.window().dispatch_event(WindowEvent::PointerPressed {
+                position,
+                button: slint::platform::PointerEventButton::Left,
+            });
+            ui.window().dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: slint::platform::PointerEventButton::Left,
+            });
+            assert!(ui.get_modal());
+        }
+        let snapshot = ui.window().take_snapshot().unwrap();
+        let (x, y) = if about { (140, 205) } else { (84, 28) };
+        let mut red_x = Vec::new();
+        for row in y..y + 44 {
+            for col in x..x + 155 {
+                let p = snapshot.as_slice()[row * 680 + col];
+                if p.r > 160 && p.g < 100 && p.b < 110 {
+                    red_x.push(col);
+                }
+            }
+        }
+        assert!(!red_x.is_empty(), "Trimly must render beside PDF");
+        assert!(*red_x.iter().min().unwrap() < x + 70);
+        if let Some(path) = std::env::var_os("PDFTRIMLY_TEST_SCREENSHOTS") {
+            let path = PathBuf::from(path);
+            fs::create_dir_all(&path).unwrap();
+            let name = if about {
+                "brand-about.ppm"
+            } else {
+                "brand-main.ppm"
+            };
+            let mut file = fs::File::create(path.join(name)).unwrap();
+            write!(file, "P6\n680 800\n255\n").unwrap();
+            let pixels: Vec<u8> = snapshot
+                .as_slice()
+                .iter()
+                .flat_map(|p| [p.r, p.g, p.b])
+                .collect();
+            file.write_all(&pixels).unwrap();
         }
     }
     ui.hide().unwrap();

@@ -19,7 +19,8 @@ salvo; o nível da CLI continua Normal quando `--level` não é informado.
 
 Depois do lote, **Copiar resumo** copia as estatísticas traduzidas da conclusão.
 **Abrir pasta de saída** abre o diretório atual no gerenciador de arquivos.
-O Sobre tem ações para o site oficial e apoio no Ko-fi. Falhas dessas ações
+O Sobre tem ações para o site oficial e apoio: Pix via Livepix em português,
+Ko-fi nos demais idiomas. O destino acompanha o idioma atual. Falhas dessas ações
 aparecem em um aviso separado; o resumo e resultados permanecem disponíveis.
 
 ## Arquivo e recuperação

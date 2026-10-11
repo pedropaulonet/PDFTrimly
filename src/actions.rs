@@ -49,7 +49,7 @@ pub(super) fn install(ui: &MainWindow, state: SharedState, desktop: Arc<dyn Desk
             },
         );
     });
-    for (url, support) in [(desktop::SITE, false), (desktop::SUPPORT, true)] {
+    for support in [false, true] {
         let weak = ui.as_weak();
         let shared = state.clone();
         let service = desktop.clone();
@@ -59,6 +59,11 @@ pub(super) fn install(ui: &MainWindow, state: SharedState, desktop: Arc<dyn Desk
             if ui.get_action_busy() {
                 return;
             }
+            let url = if support {
+                desktop::support_url(shared.borrow().language)
+            } else {
+                desktop::SITE
+            };
             ui.set_action_busy(true);
             let service = service.clone();
             let shared = shared.clone();

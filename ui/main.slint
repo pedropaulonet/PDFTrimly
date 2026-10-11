@@ -65,6 +65,43 @@ export struct PdfRow {
     size: string
 }
 
+component BrandTitle inherits Rectangle {
+    in property <color> text-color;
+    width: 56px + pdf.preferred-width + trimly.preferred-width;
+    height: 44px;
+    horizontal-stretch: 0;
+
+    Image {
+        x: 0px;
+        y: 0px;
+        source: @image-url("../assets/logo.svg");
+        width: 44px;
+        height: 44px;
+        image-fit: contain;
+        accessible-label: "PDFTrimly";
+    }
+    pdf := Text {
+        x: 56px;
+        width: self.preferred-width;
+        height: parent.height;
+        vertical-alignment: center;
+        text: "PDF";
+        font-size: 23px;
+        font-weight: 700;
+        color: root.text-color;
+    }
+    trimly := Text {
+        x: pdf.x + pdf.width;
+        width: self.preferred-width;
+        height: parent.height;
+        vertical-alignment: center;
+        text: "Trimly";
+        font-size: 23px;
+        font-weight: 700;
+        color: #dc3545;
+    }
+}
+
 export component MainWindow inherits Window {
     title: "PDFTrimly";
     icon: @image-url("../assets/logo.svg");
@@ -244,28 +281,11 @@ export component MainWindow inherits Window {
                     padding: 12px;
                     spacing: 12px;
 
-                    Image {
-                        source: @image-url("../assets/logo.svg");
-                        width: 44px;
-                        height: 44px;
-                        image-fit: contain;
-                        accessible-label: "PDFTrimly";
-                        vertical-alignment: center;
+                    BrandTitle {
+                        text-color: root.heading-color;
                     }
-
-                    VerticalBox {
-                        spacing: 2px;
+                    Rectangle {
                         horizontal-stretch: 1;
-                        alignment: center;
-
-                        Text {
-                            text: "PDFTrimly";
-                            font-size: 23px;
-                            font-weight: 700;
-                            color: root.heading-color;
-                        }
-
-
                     }
 
                     settings-button := Button {
@@ -797,11 +817,8 @@ export component MainWindow inherits Window {
                     padding: 24px;
                     spacing: 16px;
 
-                    Text {
-                        text: "PDFTrimly";
-                        font-size: 23px;
-                        font-weight: 700;
-                        color: root.heading-color;
+                    BrandTitle {
+                        text-color: root.heading-color;
                     }
 
                     ScrollView {

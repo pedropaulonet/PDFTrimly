@@ -103,5 +103,5 @@ remaining distribution review.
 Contributions should follow the staged specification and include checks
 appropriate to the behavior changed. Never commit private document fixtures.
 
-[Website](https://dev.pedropaulo.net/pdftrimly) ·
+[Website](https://made.pedropaulo.net/projects/pdftrimly/) ·
 [Support on Ko-fi](https://ko-fi.com/pedropaulo)

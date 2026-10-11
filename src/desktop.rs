@@ -1,7 +1,15 @@
 //! Desktop integration stays out of the engine and runs on a worker.
 use std::{path::Path, sync::Mutex};
-pub const SITE: &str = "https://dev.pedropaulo.net/pdftrimly";
+pub const SITE: &str = "https://made.pedropaulo.net/projects/pdftrimly/";
 pub const SUPPORT: &str = "https://ko-fi.com/pedropaulo";
+pub const SUPPORT_PIX: &str = "https://livepix.gg/pedropaulo";
+pub fn support_url(language: crate::i18n::Language) -> &'static str {
+    if language == crate::i18n::Language::Portuguese {
+        SUPPORT_PIX
+    } else {
+        SUPPORT
+    }
+}
 pub trait Desktop: Send + Sync {
     fn copy(&self, text: &str) -> Result<(), String>;
     fn folder(&self, path: &Path) -> Result<(), String>;
@@ -51,7 +59,7 @@ impl Desktop for NativeDesktop {
         }
     }
     fn link(&self, url: &str) -> Result<(), String> {
-        if ![SITE, SUPPORT].contains(&url) {
+        if ![SITE, SUPPORT, SUPPORT_PIX].contains(&url) {
             return Err("Unsupported product link".into());
         }
         webbrowser::open(url).map_err(|e| e.to_string())

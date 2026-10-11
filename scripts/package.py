@@ -107,7 +107,7 @@ def deb(binary, version, output, license_dir):
             f"Installed-Size: {size}\nSection: utils\nPriority: optional\n"
             f'Depends: {dependencies}, {", ".join(runtime)}\n'
             "Recommends: xdg-desktop-portal\n"
-            "Homepage: https://dev.pedropaulo.net/pdftrimly\n"
+            "Homepage: https://made.pedropaulo.net/projects/pdftrimly/\n"
             "Description: Local and offline PDF compression\n"
             " Optimize PDF streams and scan images while preserving existing OCR.\n",
             encoding="utf-8")

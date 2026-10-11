@@ -102,11 +102,12 @@ fn apply_labels(ui: &MainWindow, language: Language) {
     label!(set_progress_hint, "progress_hint");
     ui.set_about_text(
         format!(
-            "PDFTrimly {}\n{}\n\n{}\n{}\n\ndev.pedropaulo.net/pdftrimly\nko-fi.com/pedropaulo",
+            "PDFTrimly {}\n{}\n\n{}\n{}\n\nmade.pedropaulo.net/projects/pdftrimly/\n{}",
             env!("CARGO_PKG_VERSION"),
             language.text("author"),
             language.text("privacy"),
-            language.text("license")
+            language.text("license"),
+            crate::desktop::support_url(language).trim_start_matches("https://")
         )
         .into(),
     );
