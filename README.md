@@ -54,6 +54,8 @@ See the [settings guide](docs/settings.md) for storage and recovery.
 On Linux, `bash scripts/build-local.sh` builds the release executable.
 Download build packages from the **Build packages** workflow's **Artifacts**
 section after a successful run. See the [packaging guide](docs/packaging.md).
+Pushing a matching `v<version>` tag also publishes the executable packages to
+GitHub Releases after both platform builds succeed. Versions `0.x` are prereleases.
 No published stable releases are available at this stage. See the
 [Linux interface guide](docs/linux-interface.md) for operation and limitations.
 

@@ -58,7 +58,9 @@ O workflow `packages.yml` gera EXE para Windows e DEB/AppImage para Linux x86_64
 com desktop entry, ícone SVG, metadados, textos de licença e checksums. Ele roda
 em push para `main`, tags `v*` ou acionamento manual, disponibilizando artefatos
 por 30 dias. Confira [packaging.md](packaging.md).
-Faltam publicação em GitHub Releases, ícones raster e ensaios em ambientes limpos. Também
+Tags `v<versão>` publicam os pacotes automaticamente em GitHub Releases após
+ambos os builds; versões 0.x são pré-releases.
+Faltam ícones raster e ensaios em ambientes limpos. Também
 falta concluir a auditoria dos textos de licença/avisos das dependências para
 redistribuição, incluindo Slint. O código e `Cargo.lock` estão versionados.
 Critério: artefatos reproduzíveis, instalação e

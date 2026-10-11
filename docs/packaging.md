@@ -8,7 +8,29 @@ O workflow **Build packages** (`.github/workflows/packages.yml`) gera:
 A versão dos nomes vem do Cargo. O workflow roda ao enviar alterações para
 `main`, enviar tags `v*` ou usar **Actions → Build packages → Run workflow**.
 Abra a execução concluída e baixe **Artifacts**. O GitHub entrega um ZIP por
-plataforma, retido por 30 dias. Os arquivos ainda não são publicados em Releases.
+plataforma, retido por 30 dias.
+
+Ao enviar uma tag `v<versão>`, o workflow aguarda os dois builds, baixa os
+artefatos da mesma execução, confere seus checksums e publica uma GitHub Release
+com EXE, DEB, AppImage, ZIP do Windows com licenças, LICENSE e SHA256SUMS.
+A versão da tag deve coincidir com a versão no Cargo; uma divergência impede
+a publicação. Tags `v0.*` e versões com sufixo (por exemplo `v1.0.0-beta.1`)
+são marcadas como pré-release. Versões estáveis a partir de 1.0.0 são releases
+normais. Push de `main` gera apenas os artefatos.
+
+Para publicar a versão atual, primeiro envie o commit que configura esse job:
+
+```sh
+git push origin main
+git tag -a v0.1.0 -m "PDFTrimly 0.1.0"
+git push origin v0.1.0
+```
+
+Acompanhe **Actions → Build packages**. A release aparece em **Releases** depois
+que ambos os pacotes terminam. O job monta uma release em rascunho, anexa todos
+os arquivos e então publica. Uma reexecução pode completar um rascunho, mas não
+substitui uma release já publicada. Não é necessário configurar um token pessoal;
+o job usa `GITHUB_TOKEN` com permissão de escrita apenas na publicação.
 
 ## Uso
 
