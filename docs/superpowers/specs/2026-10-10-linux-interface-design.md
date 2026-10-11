@@ -15,7 +15,7 @@ duplicados são descartados; cada linha exibe nome, tamanho e estado.
 Abaixo da lista: nível Leve / Normal / Ultra, explicação breve da qualidade,
 pasta de saída e botão Compactar. Normal é o padrão. Um nível vale para todo
 o lote. A interface inicial usa português do Brasil, com textos centralizados
-para permitir as traduções previstas em projeto.md posteriormente.
+para permitir as traduções previstas na especificação interna posteriormente.
 
 Durante o processamento: arquivo atual, contador de arquivos concluídos e
 progresso baseado nesse contador. Não estimar progresso interno por página

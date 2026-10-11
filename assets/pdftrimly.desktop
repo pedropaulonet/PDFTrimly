@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PDFTrimly
+Comment=Compress PDFs locally and offline
+Exec=pdftrimly
+Icon=pdftrimly
+Terminal=false
+Categories=Office;
+StartupNotify=true

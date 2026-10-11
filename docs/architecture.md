@@ -1,6 +1,6 @@
 # Foundation architecture
 
-The project follows `projeto.md`: a Rust workspace containing
+The project uses a Rust workspace containing
 the `pdftrimly` application and an independent `pdftrimly-core` library.
 Both inherit version 0.1.0, edition 2021, authorship and MIT metadata from
 the workspace. Unsafe Rust is forbidden in the engine and denied in handwritten application

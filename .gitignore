@@ -3,6 +3,8 @@
 /testes/
 # Local prompts for continuing development with Luna.
 /prompts-luna/
+/projeto.md
+__pycache__/
 *.AppDir/
 *.log
 *.tmp

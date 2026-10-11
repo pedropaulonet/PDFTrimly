@@ -12,7 +12,7 @@ Settings persist language, System/Light/Dark theme, compression level and output
 folder and recursive discovery defaults. Folder inputs preserve relative
 subdirectories, exclude the destination and deduplicate paths. A compact list
 keeps full paths and results in a separate detail panel. Results can be copied and the output folder opened.
-Installers are a future milestone.
+Windows EXE and Linux DEB/AppImage packaging is configured in GitHub Actions.
 
 ## Project structure
 
@@ -24,9 +24,9 @@ Installers are a future milestone.
 - `src/config.rs` and `src/settings.rs`: versioned preferences and settings flow.
 - `src/desktop.rs` and `src/actions.rs`: clipboard, folder and product links.
 - `.github/workflows/ci.yml`: Linux and Windows compilation and checks.
+- `.github/workflows/packages.yml`: Windows EXE and Linux DEB/AppImage builds.
 - `scripts/build-local.sh`: local release build helper.
 - `docs/`: architecture, dependency decisions and implementation stages.
-- `projeto.md`: full development specification in Portuguese.
 
 The application depends on the core crate. The core must remain independent
 of the UI, filesystem dialogs and application settings.
@@ -52,7 +52,9 @@ See the [folder input guide](docs/folder-input.md) for discovery rules.
 See the [settings guide](docs/settings.md) for storage and recovery.
 
 On Linux, `bash scripts/build-local.sh` builds the release executable.
-No installers or published releases are available at this stage. See the
+Download build packages from the **Build packages** workflow's **Artifacts**
+section after a successful run. See the [packaging guide](docs/packaging.md).
+No published stable releases are available at this stage. See the
 [Linux interface guide](docs/linux-interface.md) for operation and limitations.
 
 ## Development checks
@@ -79,11 +81,10 @@ images, masks and complex color spaces are preserved. See
 [image optimization results](docs/image-optimization.md).
 
 The next milestone is complete graphical verification and broader validation
-with representative real-world PDFs. In-file cancellation and release
-packaging are still pending. See the
+with representative real-world PDFs. In-file cancellation and broader package
+installation verification are still pending. See the
 [first release checklist](docs/first-release.md) and [language guide](docs/i18n.md).
-See [architecture](docs/architecture.md)
-and the complete [specification](projeto.md).
+See [architecture](docs/architecture.md).
 
 Processing must remain offline and must never modify the original PDF.
 Encrypted and digitally signed documents require explicit handling. The

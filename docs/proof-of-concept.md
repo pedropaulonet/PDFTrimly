@@ -107,7 +107,7 @@ encrypted/signed rejection, malformed references and cyclic pages, decompression
 limits, unsupported filters, multipage/shared content and CLI behavior.
 
 The executable demonstrates real reduction and truthful unchanged outcomes.
-Full Stage 2 acceptance from `projeto.md` remains pending a representative
+Full Stage 2 acceptance remains pending a representative
 collection of real text documents, scans, photographs, vectors and mixed PDFs,
 plus broader feature coverage and visual comparisons. For current image support, real-document measurements and OCR regression
 coverage, see [image optimization](image-optimization.md).

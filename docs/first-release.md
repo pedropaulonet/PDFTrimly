@@ -1,6 +1,6 @@
 # O que falta para a primeira versão
 
-Revisão do código em 10/10/2026, confrontada com `projeto.md`. A versão no Cargo
+Revisão do código em 10/10/2026. A versão no Cargo
 é 0.1.0, mas isso é um número de desenvolvimento; o projeto ainda não cumpre
 os critérios completos de distribuição da especificação.
 
@@ -14,7 +14,7 @@ os critérios completos de distribuição da especificação.
 | Idiomas | Cinco catálogos incorporados; detecção de locale; fallback inglês; troca na janela; textos da CLI | Chaves, parâmetros, locale, plurais, interpolação e CLI cobertos. Idioma padrão persistido; revisão com falantes nativos ainda pendente. |
 | Resumo | Quantidades com/sem economia, erros, tamanhos comparáveis e percentual agregado | Dados de falhas não entram no total de tamanhos. Cópia do resumo e abertura da pasta implementadas; clipboard/launcher nativos ainda requerem conferência. |
 | Preferências | Idioma, Sistema/Claro/Escuro, nível, subpastas e pasta padrão; Salvar/Cancelar; TOML versionado com substituição atômica | Persistência, reinício, recuperação e erros cobertos. Ações nativas e caminhos Windows ainda precisam de conferência. |
-| CI | Workflow com Linux e Windows: formato, compilação, Clippy e testes | Existe configuração; nenhuma execução remota do workflow foi verificada nesta revisão. |
+| CI | Workflow com Linux e Windows: formato, compilação, Clippy e testes | Primeira execução bem-sucedida no commit `029a594`, conforme resultado do GitHub Actions fornecido pelo autor. |
 
 ## Pendências prioritárias
 
@@ -54,12 +54,14 @@ operação puder ser interrompida com segurança.
 
 ### 5. Preparar e verificar a distribuição
 
-Faltam workflow de release por tag, Windows ZIP, Linux DEB/AppImage, desktop
-entry, ícones raster, metadados de pacotes e ensaios em ambientes limpos. Também
+O workflow `packages.yml` gera EXE para Windows e DEB/AppImage para Linux x86_64,
+com desktop entry, ícone SVG, metadados, textos de licença e checksums. Ele roda
+em push para `main`, tags `v*` ou acionamento manual, disponibilizando artefatos
+por 30 dias. Confira [packaging.md](packaging.md).
+Faltam publicação em GitHub Releases, ícones raster e ensaios em ambientes limpos. Também
 falta concluir a auditoria dos textos de licença/avisos das dependências para
-redistribuição, incluindo Slint. O Git local ainda está sem commits e os fontes
-aparecem como não rastreados; será necessário versionar o código e `Cargo.lock`
-antes de executar CI remota. Critério: artefatos reproduzíveis, instalação e
+redistribuição, incluindo Slint. O código e `Cargo.lock` estão versionados.
+Critério: artefatos reproduzíveis, instalação e
 startup documentados em Linux e Windows e termos de distribuição atendidos.
 
 ## Evidência adicional do fluxo GUI
