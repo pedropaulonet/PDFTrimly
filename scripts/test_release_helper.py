@@ -28,8 +28,17 @@ class ReleaseHelperTests(unittest.TestCase):
                               text=True, capture_output=True)
 
     def run_helper(self, answers):
-        return subprocess.run([str(SCRIPT)], cwd=self.root, input=answers,
+        return subprocess.run(self.script_command(), cwd=self.root, input=answers,
                               text=True, capture_output=True)
+
+    def script_command(self):
+        bash = shutil.which("bash")
+        if bash is None:
+            self.fail("Bash is required to run scripts/release.sh tests")
+        return [bash, str(SCRIPT)]
+
+    def test_script_command_uses_bash(self):
+        self.assertEqual(self.script_command()[0], shutil.which("bash"))
 
     def test_empty_index_refuses_commit(self):
         result = self.run_helper("1\n")
@@ -123,8 +132,8 @@ class ReleaseHelperTests(unittest.TestCase):
         gh.write_text("#!/bin/sh\n[ \"$1 $2\" = \"auth status\" ]\n")
         gh.chmod(0o755)
         env = os.environ.copy()
-        env["PATH"] = f"{fake_bin}:{env['PATH']}"
-        result = subprocess.run([str(SCRIPT)], cwd=self.root,
+        env["PATH"] = os.pathsep.join((str(fake_bin), env["PATH"]))
+        result = subprocess.run(self.script_command(), cwd=self.root,
                                 input="3\n0.1.3\ns\ns\ns\n", text=True,
                                 capture_output=True, env=env)
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -147,10 +156,10 @@ class ReleaseHelperTests(unittest.TestCase):
         gh.write_text("#!/bin/sh\n[ \"$1 $2\" = \"auth status\" ]\n")
         gh.chmod(0o755)
         env = os.environ.copy()
-        env["PATH"] = f"{fake_tmp.name}:{env['PATH']}"
+        env["PATH"] = os.pathsep.join((fake_tmp.name, env["PATH"]))
 
         self.git("tag", "v0.1.3")
-        local = subprocess.run([str(SCRIPT)], cwd=self.root, input="3\n0.1.3\n",
+        local = subprocess.run(self.script_command(), cwd=self.root, input="3\n0.1.3\n",
                                text=True, capture_output=True, env=env)
         self.assertNotEqual(local.returncode, 0)
         self.assertIn("A tag local", local.stderr)
@@ -159,7 +168,7 @@ class ReleaseHelperTests(unittest.TestCase):
         self.git("tag", "v0.1.3")
         self.git("push", "origin", "v0.1.3")
         self.git("tag", "-d", "v0.1.3")
-        remote_tag = subprocess.run([str(SCRIPT)], cwd=self.root,
+        remote_tag = subprocess.run(self.script_command(), cwd=self.root,
                                     input="3\n0.1.3\n", text=True,
                                     capture_output=True, env=env)
         self.assertNotEqual(remote_tag.returncode, 0)
@@ -189,9 +198,9 @@ class ReleaseHelperTests(unittest.TestCase):
         cargo.write_text("#!/bin/sh\nprintf 'preflight failed\\n' >&2\nexit 1\n")
         cargo.chmod(0o755)
         env = os.environ.copy()
-        env["PATH"] = f"{fake_bin}:{env['PATH']}"
+        env["PATH"] = os.pathsep.join((str(fake_bin), env["PATH"]))
         before = self.git("rev-parse", "HEAD").stdout.strip()
-        result = subprocess.run([str(SCRIPT)], cwd=self.root,
+        result = subprocess.run(self.script_command(), cwd=self.root,
                                 input="3\n0.1.2\ns\n", text=True,
                                 capture_output=True, env=env)
         self.assertNotEqual(result.returncode, 0)
@@ -211,8 +220,8 @@ class ReleaseHelperTests(unittest.TestCase):
         gh.write_text("#!/bin/sh\nexit 1\n")
         gh.chmod(0o755)
         env = os.environ.copy()
-        env["PATH"] = f"{fake_tmp.name}:{env['PATH']}"
-        result = subprocess.run([str(SCRIPT)], cwd=self.root, input="3\n",
+        env["PATH"] = os.pathsep.join((fake_tmp.name, env["PATH"]))
+        result = subprocess.run(self.script_command(), cwd=self.root, input="3\n",
                                 text=True, capture_output=True, env=env)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Autentique", result.stderr)
