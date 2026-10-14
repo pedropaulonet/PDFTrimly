@@ -183,6 +183,7 @@ fn preserves_invisible_ocr_layer_when_compressing_scan_images() {
     for (level, width) in [
         (CompressionLevel::Normal, 150),
         (CompressionLevel::Ultra, 96),
+        (CompressionLevel::Maximum, 72),
     ] {
         let output = dir.path().join(format!("ocr-{level:?}.pdf"));
         let report = optimize(
@@ -253,7 +254,7 @@ fn normal_resizes_to_effective_150_dpi_and_preserves_searchable_text() {
 }
 
 #[test]
-fn ultra_uses_96_dpi_while_light_preserves_image_bytes() {
+fn ultra_and_maximum_use_their_dpi_targets_while_light_preserves_image_bytes() {
     let dir = tempdir().unwrap();
     let input = dir.path().join("input.pdf");
     let (mut doc, id) = image_document();
@@ -262,6 +263,7 @@ fn ultra_uses_96_dpi_while_light_preserves_image_bytes() {
     for (level, width) in [
         (CompressionLevel::Light, 600),
         (CompressionLevel::Ultra, 96),
+        (CompressionLevel::Maximum, 72),
     ] {
         let output = dir.path().join(format!("{level:?}.pdf"));
         let report = optimize(
@@ -377,6 +379,7 @@ fn masks_cmyk_and_resource_limits_preserve_image_objects() {
         doc.save(&input).unwrap();
         let original = Document::load(&input).unwrap();
         let options = OptimizeOptions {
+            level: CompressionLevel::Maximum,
             max_image_pixels: if kind == "limit" { 100 } else { 32_000_000 },
             ..Default::default()
         };

@@ -69,6 +69,12 @@ impl Entry {
         };
         format!("{}\n{}", self.path.display(), status)
     }
+    pub fn comparison(&self, language: Language) -> String {
+        match &self.status {
+            RowStatus::Finished(Ok((report, _))) => messages::comparison(language, report),
+            _ => messages::size(language, self.bytes),
+        }
+    }
 }
 
 pub enum Status {

@@ -2,7 +2,7 @@
 
 The project uses a Rust workspace containing
 the `pdftrimly` application and an independent `pdftrimly-core` library.
-Both inherit version 0.1.0, edition 2021, authorship and MIT metadata from
+Both inherit version 0.1.2, edition 2021, authorship and MIT metadata from
 the workspace. Unsafe Rust is forbidden in the engine and denied in handwritten application
 code. Slint-generated vtable macros carry their own local allowances.
 
@@ -18,7 +18,7 @@ catalogs, normalizes locale and validates translation keys and placeholders.
 implements lossless stream optimization in `streams.rs`, file orchestration
 in `optimizer.rs` and structural checks in `validation.rs`. `image_usage.rs`
 tracks image placement through pages and forms; `images.rs` resizes and
-recompresses eligible RGB/gray images for Normal and Ultra. Light leaves
+recompresses eligible RGB/gray images for Normal, Ultra and Maximum. Light leaves
 image data intact. Existing OCR text and page drawing commands are preserved.
 
 ## Dependency direction

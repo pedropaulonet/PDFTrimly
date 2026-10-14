@@ -69,6 +69,7 @@ fn apply_labels(ui: &MainWindow, language: Language) {
     label!(set_settings_hint, "settings_hint");
     label!(set_copy_summary, "copy_summary");
     label!(set_open_output, "open_output");
+    label!(set_open_file, "open_file");
     label!(set_site, "site");
     label!(set_support, "support");
     label!(set_destination, "destination");
@@ -81,9 +82,11 @@ fn apply_labels(ui: &MainWindow, language: Language) {
     label!(set_light, "light");
     label!(set_normal, "normal");
     label!(set_ultra, "ultra");
+    label!(set_maximum, "maximum");
     label!(set_lossless, "lossless");
     label!(set_normal_hint, "normal_hint");
     label!(set_ultra_hint, "ultra_hint");
+    label!(set_maximum_hint, "maximum_hint");
     label!(set_folder, "folder");
     label!(set_start, "start");
     label!(set_stop, "stop");
@@ -128,14 +131,8 @@ fn refresh(ui: &MainWindow, state: &State, rows: &Rows) {
             name: entry.name().into(),
             detail: entry.detail(state.language).into(),
             summary: entry.short_status(state.language).into(),
-            size: crate::messages::size(
-                state.language,
-                match &entry.status {
-                    crate::gui_state::RowStatus::Finished(Ok((report, _))) => report.input_bytes,
-                    _ => entry.bytes,
-                },
-            )
-            .into(),
+            comparison: entry.comparison(state.language).into(),
+            can_open: matches!(entry.status, crate::gui_state::RowStatus::Finished(Ok(_))),
         };
         if index < rows.row_count() {
             if rows.row_data(index).is_none_or(|old| old != row) {
@@ -425,6 +422,7 @@ fn create_window(
             level: match ui.get_level() {
                 0 => CompressionLevel::Light,
                 2 => CompressionLevel::Ultra,
+                3 => CompressionLevel::Maximum,
                 _ => CompressionLevel::Normal,
             },
         };

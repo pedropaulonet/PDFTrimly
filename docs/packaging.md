@@ -3,7 +3,7 @@
 O workflow **Build packages** (`.github/workflows/packages.yml`) gera:
 
 - Windows x86_64: `pdftrimly.exe`, portátil, com licenças ao lado.
-- Linux x86_64: `pdftrimly_0.1.1_amd64.deb` e `PDFTrimly-0.1.1-x86_64.AppImage`.
+- Linux x86_64: `pdftrimly_0.1.2_amd64.deb` e `PDFTrimly-0.1.2-x86_64.AppImage`.
 
 A versão dos nomes vem do Cargo. O workflow roda ao enviar alterações para
 `main`, enviar tags `v*` ou usar **Actions → Build packages → Run workflow**.
@@ -30,7 +30,7 @@ no terminal. O executável ainda não é assinado e não é um instalador.
 No Debian/Ubuntu, extraia o ZIP e instale o DEB com:
 
 ```sh
-sudo apt install ./pdftrimly_0.1.1_amd64.deb
+sudo apt install ./pdftrimly_0.1.2_amd64.deb
 ```
 
 O pacote registra o aplicativo no menu e instala o comando `pdftrimly`.
@@ -43,14 +43,14 @@ declaradas pelo pacote.
 Para o AppImage:
 
 ```sh
-chmod +x PDFTrimly-0.1.1-x86_64.AppImage
-./PDFTrimly-0.1.1-x86_64.AppImage
+chmod +x PDFTrimly-0.1.2-x86_64.AppImage
+./PDFTrimly-0.1.2-x86_64.AppImage
 ```
 
 Em sistemas sem FUSE, use:
 
 ```sh
-APPIMAGE_EXTRACT_AND_RUN=1 ./PDFTrimly-0.1.1-x86_64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./PDFTrimly-0.1.2-x86_64.AppImage
 ```
 
 O AppImage reúne bibliotecas nativas, incluindo as carregadas dinamicamente,

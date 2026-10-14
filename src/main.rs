@@ -36,6 +36,7 @@ fn compress(
                 CompressionLevel::Light => "light",
                 CompressionLevel::Normal => "normal",
                 CompressionLevel::Ultra => "ultra",
+                CompressionLevel::Maximum => "maximum",
             };
             println!(
                 "{}",
@@ -47,6 +48,7 @@ fn compress(
                     CompressionLevel::Light => "lossless",
                     CompressionLevel::Normal => "normal_hint",
                     CompressionLevel::Ultra => "ultra_hint",
+                    CompressionLevel::Maximum => "maximum_hint",
                 })
             );
             println!(
@@ -138,6 +140,7 @@ fn main() -> ExitCode {
                 Some("light" | "leve") => CompressionLevel::Light,
                 Some("normal") => CompressionLevel::Normal,
                 Some("ultra") => CompressionLevel::Ultra,
+                Some("maximum") => CompressionLevel::Maximum,
                 _ => return invalid_arguments(language),
             };
             compress(input, output, level, language)

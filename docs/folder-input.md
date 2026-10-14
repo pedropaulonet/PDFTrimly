@@ -60,6 +60,11 @@ edição da seleção aguarda o fim do processamento.
 A janela tem altura mínima de 800 px. Os controles e o resumo ficam fixos;
 a lista e os detalhes têm suas próprias rolagens. Nomes truncados na linha permanecem completos nos detalhes.
 
+Cada linha tem um botão **Abrir**, desativado até o processamento daquele PDF
+terminar com sucesso. Ele abre a saída no aplicativo padrão do sistema; a ação
+continua disponível para PDFs sem redução de tamanho, desde que a saída tenha
+sido criada. Erros e itens ainda não processados não podem ser abertos.
+
 ## Evidência e limites
 
 Testes automatizados cobrem recursão, exclusão de destino, duplicatas, links
@@ -99,3 +104,9 @@ O sufixo é definido pelo idioma no início de cada lote: inglês `compressed`,
 português `compactado`, francês `compresse`, espanhol `comprimido` e italiano
 `compresso`. Trocar idioma durante o lote traduz a interface; os nomes daquele
 lote conservam o idioma inicial. Arquivos já gravados não são renomeados.
+Completed rows show measured input size, output size, saved bytes and savings
+percentage. Values appear only after processing and use the optimizer report;
+failed or not-started rows retain their status. The batch summary totals only
+successful PDFs.
+
+Após o processamento, cada linha mostra os tamanhos medidos de entrada e saída, a economia em bytes e o percentual. Esses valores não são estimados e não aparecem antes de concluir. Falhas e arquivos não iniciados mantêm seus estados; o resumo agrega apenas PDFs processados com sucesso.

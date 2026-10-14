@@ -207,6 +207,7 @@ fn candidate(
         CompressionLevel::Light => return None,
         CompressionLevel::Normal => (150.0, 80),
         CompressionLevel::Ultra => (96.0, 60),
+        CompressionLevel::Maximum => (72.0, 40),
     };
     // Account for the largest placement on either axis; never upscale an image.
     let scale = (size.0 * dpi / (72.0 * f64::from(width)))

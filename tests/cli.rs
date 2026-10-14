@@ -55,7 +55,7 @@ fn accepts_levels_and_rejects_unknown_level() {
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("input.pdf");
     common::document(100, false).save(&input).unwrap();
-    for level in ["light", "normal", "ultra", "unknown"] {
+    for level in ["light", "normal", "ultra", "maximum", "unknown"] {
         let output = dir.path().join(format!("{level}.pdf"));
         let result = Command::new(env!("CARGO_BIN_EXE_pdftrimly"))
             .env("PDFTRIMLY_LANG", "pt-BR")
@@ -71,7 +71,7 @@ fn accepts_levels_and_rejects_unknown_level() {
 }
 
 #[test]
-fn cli_localizes_help_and_errors_in_all_five_languages() {
+fn cli_localizes_help_and_errors_in_all_six_languages() {
     let binary = env!("CARGO_BIN_EXE_pdftrimly");
     for (locale, help, error) in [
         ("en", "Usage:", "Invalid arguments."),
@@ -79,6 +79,7 @@ fn cli_localizes_help_and_errors_in_all_five_languages() {
         ("fr-FR", "Utilisation", "Arguments invalides."),
         ("es", "Uso:", "Argumentos inválidos."),
         ("it", "Uso:", "Argomenti non validi."),
+        ("de_DE.UTF-8", "Verwendung:", "Ungültige Argumente."),
         ("unknown", "Usage:", "Invalid arguments."),
     ] {
         let output = Command::new(binary)

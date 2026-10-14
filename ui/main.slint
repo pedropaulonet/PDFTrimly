@@ -25,6 +25,7 @@ export global Labels {
     in-out property <string> settings-hint;
     in-out property <string> copy-summary;
     in-out property <string> open-output;
+    in-out property <string> open-file;
     in-out property <string> site;
     in-out property <string> support;
     in-out property <string> destination;
@@ -37,9 +38,11 @@ export global Labels {
     in-out property <string> light;
     in-out property <string> normal;
     in-out property <string> ultra;
+    in-out property <string> maximum;
     in-out property <string> lossless;
     in-out property <string> normal-hint;
     in-out property <string> ultra-hint;
+    in-out property <string> maximum-hint;
     in-out property <string> folder;
     in-out property <string> start;
     in-out property <string> stop;
@@ -62,7 +65,8 @@ export struct PdfRow {
     name: string,
     detail: string,
     summary: string,
-    size: string
+    comparison: string,
+    can_open: bool
 }
 
 component BrandTitle inherits Rectangle {
@@ -177,7 +181,7 @@ export component MainWindow inherits Window {
     private property <color> heading-color:
         root.dark-mode ? #f8fafc : #0f172a;
 
-    private property <length> list-row-height: 52px;
+    private property <length> list-row-height: 64px;
 
     // Settings callbacks
     callback open-settings();
@@ -188,6 +192,7 @@ export component MainWindow inherits Window {
     // External actions
     callback copy-summary();
     callback open-output();
+    callback open-file(int);
     callback open-site();
     callback open-support();
 
@@ -462,43 +467,55 @@ export component MainWindow inherits Window {
                                             ? root.surface
                                             : root.soft-surface;
 
-                                HorizontalLayout {
-                                    padding-left: 12px;
-                                    padding-right: 12px;
-                                    spacing: 12px;
-
-                                    Text {
-                                        text: row.name;
-                                        overflow: elide;
-                                        min-width: 0px;
-                                        horizontal-stretch: 1;
-                                        vertical-alignment: center;
-                                        font-weight: index == root.selected-row ? 600 : 400;
-                                        color: root.heading-color;
-                                    }
-
-                                    Text {
-                                        text: row.size;
-                                        width: 90px;
-                                        horizontal-alignment: right;
-                                        vertical-alignment: center;
-                                        color: root.muted-color;
-                                    }
-                                    Text {
-                                        text: row.summary;
-                                        width: 180px;
-                                        wrap: word-wrap;
-                                        vertical-alignment: center;
-                                        horizontal-alignment: right;
-                                        color: root.muted-color;
-                                    }
-                                }
-
                                 TouchArea {
                                     clicked => {
                                         list-focus.focus();
                                         root.select-row(index);
                                         root.detail-open = true;
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    spacing: 12px;
+
+                                    VerticalLayout {
+                                        min-width: 0px;
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+                                        Text {
+                                            text: row.name;
+                                            overflow: elide;
+                                            min-width: 0px;
+                                            horizontal-stretch: 1;
+                                            font-weight: index == root.selected-row ? 600 : 400;
+                                            color: root.heading-color;
+                                        }
+                                        Text {
+                                            text: row.comparison;
+                                            overflow: elide;
+                                            min-width: 0px;
+                                            horizontal-stretch: 1;
+                                            font-size: 11px;
+                                            color: root.muted-color;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: row.summary;
+                                        width: 160px;
+                                        wrap: word-wrap;
+                                        vertical-alignment: center;
+                                        horizontal-alignment: right;
+                                        color: root.muted-color;
+                                    }
+                                    Button {
+                                        text: Labels.open-file;
+                                        enabled: row.can_open && !root.action-busy;
+                                        clicked => {
+                                            root.open-file(index);
+                                        }
                                     }
                                 }
                             }
@@ -578,7 +595,8 @@ export component MainWindow inherits Window {
                             model: [
                                 Labels.light,
                                 Labels.normal,
-                                Labels.ultra
+                                Labels.ultra,
+                                Labels.maximum
                             ];
                             current-index <=> root.level;
                             enabled: root.editable;
@@ -589,7 +607,7 @@ export component MainWindow inherits Window {
                                 ? Labels.lossless
                                 : root.level == 1
                                     ? Labels.normal-hint
-                                    : Labels.ultra-hint;
+                                    : root.level == 2 ? Labels.ultra-hint : Labels.maximum-hint;
 
                             color: root.muted-color;
                             font-size: 12px;
@@ -937,7 +955,8 @@ export component MainWindow inherits Window {
                                     "Português (Brasil)",
                                     "Français",
                                     "Español",
-                                    "Italiano"
+                                    "Italiano",
+                                    "Deutsch"
                                 ];
                                 current-index <=> root.draft-language;
                                 enabled: !root.settings-busy;
@@ -969,10 +988,24 @@ export component MainWindow inherits Window {
                                 model: [
                                     Labels.light,
                                     Labels.normal,
-                                    Labels.ultra
+                                    Labels.ultra,
+                                    Labels.maximum
                                 ];
                                 current-index <=> root.draft-level;
                                 enabled: !root.settings-busy;
+                            }
+
+                            Text {
+                                text: root.draft-level == 0
+                                    ? Labels.lossless
+                                    : root.draft-level == 1
+                                        ? Labels.normal-hint
+                                        : root.draft-level == 2
+                                            ? Labels.ultra-hint
+                                            : Labels.maximum-hint;
+                                color: root.muted-color;
+                                font-size: 12px;
+                                wrap: word-wrap;
                             }
 
                             CheckBox {

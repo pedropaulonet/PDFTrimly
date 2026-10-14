@@ -49,6 +49,38 @@ pub(super) fn install(ui: &MainWindow, state: SharedState, desktop: Arc<dyn Desk
             },
         );
     });
+    let weak = ui.as_weak();
+    let shared = state.clone();
+    let service = desktop.clone();
+    let file_timer = timer.clone();
+    ui.on_open_file(move |index| {
+        let Some(ui) = weak.upgrade() else { return };
+        if ui.get_action_busy() || ui.get_modal() {
+            return;
+        }
+        let output = {
+            let state = shared.borrow();
+            usize::try_from(index)
+                .ok()
+                .and_then(|index| state.entries.get(index))
+                .and_then(|entry| match &entry.status {
+                    crate::gui_state::RowStatus::Finished(Ok((_, output))) => Some(output.clone()),
+                    _ => None,
+                })
+        };
+        let Some(output) = output else { return };
+        ui.set_action_busy(true);
+        let service = service.clone();
+        let shared = shared.clone();
+        ui_tasks::start(
+            &ui,
+            file_timer.clone(),
+            move || service.file(&output),
+            move |ui, result| {
+                finish(ui, &shared, result, None);
+            },
+        );
+    });
     for support in [false, true] {
         let weak = ui.as_weak();
         let shared = state.clone();

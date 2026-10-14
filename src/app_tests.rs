@@ -88,6 +88,8 @@ fn gui_processes_real_batch_errors_language_changes_and_output_collisions() {
     until(|| !ui.get_dialog_open());
     drop_paths(&ui, &[good.clone(), dir.path().join("unsupported.txt")]);
     assert_eq!(ui.get_rows().row_count(), 2);
+    assert!(!ui.get_rows().row_data(0).unwrap().can_open);
+    assert!(!ui.get_rows().row_data(1).unwrap().can_open);
     assert!(ui.get_status().contains("already selected: 1"));
     assert!(ui.get_status().contains("unsupported or unavailable: 1"));
     choose_folder(&ui, &picker, dir.path());
@@ -114,8 +116,30 @@ fn gui_processes_real_batch_errors_language_changes_and_output_collisions() {
     let first = dir
         .path()
         .join("Relatório com espaços, acentos e nome longo-compressed.pdf");
+    let good_row = ui.get_rows().row_data(0).unwrap();
+    assert!(good_row.comparison.contains("→"));
+    assert!(good_row.comparison.contains("réduction"));
+    assert!(good_row.can_open);
+    let failed_row = ui.get_rows().row_data(1).unwrap();
+    assert!(failed_row.comparison.contains("B"));
+    assert!(!failed_row.comparison.contains("→"));
+    assert!(!failed_row.can_open);
     let bytes = fs::read(&first).unwrap();
     assert!(bytes.len() < original.len());
+    ui.invoke_language_changed(Language::English as i32);
+    assert!(ui
+        .get_rows()
+        .row_data(0)
+        .unwrap()
+        .comparison
+        .contains("saved"));
+    ui.invoke_language_changed(Language::German as i32);
+    assert!(ui
+        .get_rows()
+        .row_data(0)
+        .unwrap()
+        .comparison
+        .contains("eingespart"));
     ui.invoke_language_changed(Language::English as i32);
     ui.invoke_start();
     until(|| !ui.get_busy());
@@ -354,10 +378,53 @@ impl crate::desktop::Desktop for MockDesktop {
             .push(format!("folder:{}", path.display()));
         Ok(())
     }
+    fn file(&self, path: &std::path::Path) -> Result<(), String> {
+        self.calls
+            .lock()
+            .unwrap()
+            .push(format!("file:{}", path.display()));
+        Ok(())
+    }
     fn link(&self, url: &str) -> Result<(), String> {
         self.calls.lock().unwrap().push(url.into());
         Ok(())
     }
+}
+
+#[test]
+fn completed_output_can_be_opened_only_after_success() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("open-me.pdf");
+    common::document(100, false).save(&input).unwrap();
+    let picker = Arc::new(ScriptedPicker::default());
+    let desktop = Arc::new(MockDesktop::default());
+    slint::platform::set_platform(Box::new(Headless)).unwrap();
+    let ui = create_window(picker.clone(), None, desktop.clone()).unwrap();
+    ui.invoke_language_changed(Language::English as i32);
+    ui.show().unwrap();
+    drop_paths(&ui, std::slice::from_ref(&input));
+
+    ui.invoke_open_file(0);
+    until(|| !ui.get_action_busy());
+    assert!(desktop.calls.lock().unwrap().is_empty());
+
+    picker
+        .folders
+        .lock()
+        .unwrap()
+        .push_back(Some(dir.path().to_path_buf()));
+    choose_folder(&ui, &picker, dir.path());
+    ui.invoke_start();
+    until(|| !ui.get_busy());
+    let output = dir.path().join("open-me-compressed.pdf");
+    ui.invoke_open_file(0);
+    assert!(ui.get_action_busy());
+    until(|| !ui.get_action_busy());
+    assert_eq!(
+        desktop.calls.lock().unwrap().as_slice(),
+        [format!("file:{}", output.display())]
+    );
+    ui.hide().unwrap();
 }
 
 #[test]
@@ -507,6 +574,9 @@ fn desktop_action_failure_preserves_summary_and_recovers_controls() {
         fn folder(&self, _: &std::path::Path) -> Result<(), String> {
             Err("unavailable".into())
         }
+        fn file(&self, _: &std::path::Path) -> Result<(), String> {
+            Err("unavailable".into())
+        }
         fn link(&self, _: &str) -> Result<(), String> {
             Err("unavailable".into())
         }
@@ -546,7 +616,7 @@ fn settings_render_in_all_languages_sizes_and_themes() {
     for (width, height) in [(680u32, 800u32), (960, 900)] {
         ui.window()
             .set_size(slint::PhysicalSize::new(width, height));
-        for language in 0..5 {
+        for language in 0..6 {
             ui.set_settings_open(false);
             ui.invoke_language_changed(language);
             ui.invoke_open_settings();
@@ -651,6 +721,9 @@ fn desktop_worker_disconnection_recovers_and_reports_in_current_language() {
         fn folder(&self, _: &std::path::Path) -> Result<(), String> {
             unreachable!()
         }
+        fn file(&self, _: &std::path::Path) -> Result<(), String> {
+            unreachable!()
+        }
         fn link(&self, _: &str) -> Result<(), String> {
             panic!("injected desktop failure")
         }
@@ -739,7 +812,24 @@ fn compact_list_renders_large_batch_and_last_item_details_are_accessible() {
                 )),
                 bytes: 2048,
                 root: None,
-                status: crate::gui_state::RowStatus::Selected,
+                status: if i == 0 {
+                    crate::gui_state::RowStatus::Finished(Ok((
+                        pdftrimly_core::OptimizeReport {
+                            outcome: pdftrimly_core::Outcome::Reduced,
+                            input_bytes: 12_000_000,
+                            output_bytes: 1_000_000,
+                            pages: 1,
+                            optimized_streams: 0,
+                            optimized_images: 1,
+                            skipped_images: 0,
+                            skipped_streams: 0,
+                            duration: std::time::Duration::ZERO,
+                        },
+                        PathBuf::from("/synthetic/output.pdf"),
+                    )))
+                } else {
+                    crate::gui_state::RowStatus::Selected
+                },
             })
             .collect(),
         ..Default::default()
@@ -753,6 +843,11 @@ fn compact_list_renders_large_batch_and_last_item_details_are_accessible() {
     refresh_detail(&ui, &state);
     assert!(ui.get_selected_detail().contains("1999.pdf"));
     assert_eq!(rows.row_count(), 2000);
+    assert!(rows
+        .row_data(0)
+        .unwrap()
+        .comparison
+        .contains("12,00 MB → 1,00 MB · redução 11,00 MB (91,67%)"));
     let snapshot = ui.window().take_snapshot().unwrap();
     assert_eq!(snapshot.width(), 680);
     if let Some(path) = std::env::var_os("PDFTRIMLY_TEST_SCREENSHOTS") {
@@ -814,6 +909,7 @@ fn output_suffix_follows_language_at_batch_start() {
         (Language::French, "compresse"),
         (Language::Spanish, "comprimido"),
         (Language::Italian, "compresso"),
+        (Language::German, "komprimiert"),
     ] {
         ui.invoke_language_changed(language as i32);
         ui.invoke_start();

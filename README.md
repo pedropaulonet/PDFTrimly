@@ -15,12 +15,12 @@ untouched.
 ![PDFTrimly desktop interface](assets/screenshot.png)
 
 - Desktop interface with multiple files, folders, drag-and-drop and batch results.
-- Light, Normal and Ultra compression levels.
-- English, Brazilian Portuguese, French, Spanish and Italian interfaces.
+- Light, Normal, Ultra and Maximum compression levels.
+- English, Brazilian Portuguese, French, Spanish, Italian and German interfaces.
 - Saved language, theme, output folder and compression preferences.
 - Command-line interface for individual files.
 
-**0.1.1 is in release preparation.** Linux DEB/AppImage and Windows portable ZIP
+**0.1.2 is in release preparation.** Linux DEB/AppImage and Windows portable ZIP
 packaging is configured. Installation and startup in clean Linux and Windows
 systems still require the [verification procedure](docs/clean-install.md).
 
@@ -33,7 +33,7 @@ and extract the ZIP. Keep the Windows executable together with `LICENSE` and
 On Ubuntu 24.04 x86_64:
 
 ```sh
-sudo apt install ./pdftrimly_0.1.1_amd64.deb
+sudo apt install ./pdftrimly_0.1.2_amd64.deb
 pdftrimly
 ```
 
@@ -44,9 +44,10 @@ succeed.
 ## Usage
 
 Open PDFTrimly, select PDFs or a folder, choose an output folder and compression
-level, then start the batch. Light preserves image data. Normal and Ultra may
-reduce image quality. Unsupported images are preserved; encrypted and digitally
-signed PDFs are rejected. Stopping a batch lets the current file finish.
+level, then start the batch. Light preserves image data. Normal, Ultra and Maximum may
+reduce image quality. Maximum may make small text in scans difficult to read;
+savings depend on the document. Unsupported images are preserved; encrypted
+and digitally signed PDFs are rejected. Stopping a batch lets the current file finish.
 
 ```sh
 pdftrimly --version

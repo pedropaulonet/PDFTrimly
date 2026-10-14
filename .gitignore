@@ -1,6 +1,8 @@
 /target/
 /dist/
 /testes/
+# Personal Rust tutorial; keep local to this checkout.
+/tutorial-rust-pt-br.md
 # Local prompts for continuing development with Luna.
 /prompts-luna/
 /projeto.md

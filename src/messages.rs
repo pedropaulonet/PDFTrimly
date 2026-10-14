@@ -103,6 +103,24 @@ pub fn result(language: Language, report: &OptimizeReport, path: &Path) -> Strin
     )
 }
 
+pub fn comparison(language: Language, report: &OptimizeReport) -> String {
+    let saved = report.input_bytes.saturating_sub(report.output_bytes);
+    let savings = if report.outcome == Outcome::Unchanged {
+        language.text("no_savings").to_owned()
+    } else {
+        format!("{}%", language.decimal(report.savings_percent(), 2))
+    };
+    language.format(
+        "comparison",
+        &[
+            ("input", size(language, report.input_bytes)),
+            ("output", size(language, report.output_bytes)),
+            ("saved", size(language, saved)),
+            ("savings", savings),
+        ],
+    )
+}
+
 #[derive(Default)]
 pub struct Totals {
     pub completed: usize,
@@ -157,5 +175,37 @@ pub fn task_detail(language: Language, detail: &str) -> String {
             .strip_prefix("Desktop opener failed: ")
             .map(|status| language.format("desktop_open_failed", &[("detail", status.into())]))
             .unwrap_or_else(|| detail.into()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    fn report(outcome: Outcome, input_bytes: u64, output_bytes: u64) -> OptimizeReport {
+        OptimizeReport {
+            outcome,
+            input_bytes,
+            output_bytes,
+            pages: 1,
+            optimized_streams: 0,
+            optimized_images: 0,
+            skipped_images: 0,
+            skipped_streams: 0,
+            duration: Duration::ZERO,
+        }
+    }
+
+    #[test]
+    fn comparison_reports_measured_sizes_and_saved_bytes() {
+        let text = comparison(Language::English, &report(Outcome::Reduced, 2_000, 1_000));
+        assert_eq!(text, "2.00 KB → 1.00 KB · saved 1.00 KB (50.00%)");
+    }
+
+    #[test]
+    fn unchanged_comparison_says_no_savings() {
+        let text = comparison(Language::English, &report(Outcome::Unchanged, 1_000, 1_000));
+        assert_eq!(text, "1.00 KB → 1.00 KB · saved 0 B (no savings)");
     }
 }

@@ -12,19 +12,21 @@ pub enum Language {
     French,
     Spanish,
     Italian,
+    German,
 }
 
-const SOURCES: [&str; 5] = [
+const SOURCES: [&str; 6] = [
     include_str!("../i18n/en.toml"),
     include_str!("../i18n/pt-BR.toml"),
     include_str!("../i18n/fr.toml"),
     include_str!("../i18n/es.toml"),
     include_str!("../i18n/it.toml"),
+    include_str!("../i18n/de.toml"),
 ];
 type Catalog = BTreeMap<String, String>;
-static CATALOGS: OnceLock<[Catalog; 5]> = OnceLock::new();
+static CATALOGS: OnceLock<[Catalog; 6]> = OnceLock::new();
 
-fn catalogs() -> &'static [Catalog; 5] {
+fn catalogs() -> &'static [Catalog; 6] {
     CATALOGS.get_or_init(|| {
         SOURCES.map(|source| toml::from_str(source).expect("valid embedded catalog"))
     })
@@ -62,6 +64,7 @@ impl Language {
             2 => Self::French,
             3 => Self::Spanish,
             4 => Self::Italian,
+            5 => Self::German,
             _ => Self::English,
         }
     }
@@ -77,6 +80,7 @@ impl Language {
             "fr" => Some(Self::French),
             "es" => Some(Self::Spanish),
             "it" => Some(Self::Italian),
+            "de" => Some(Self::German),
             _ => None,
         }
     }
@@ -159,7 +163,8 @@ mod tests {
         }
         assert_eq!(Language::from_locale("fr_CA.UTF-8"), Some(Language::French));
         assert_eq!(Language::from_locale("C"), None);
-        assert_eq!(Language::from_locale("de-DE"), None);
+        assert_eq!(Language::from_locale("de-DE"), Some(Language::German));
+        assert_eq!(Language::from_locale("de_DE.UTF-8"), Some(Language::German));
         assert_eq!(Language::from_index(99), Language::English);
     }
 

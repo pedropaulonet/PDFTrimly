@@ -13,6 +13,7 @@ pub fn support_url(language: crate::i18n::Language) -> &'static str {
 pub trait Desktop: Send + Sync {
     fn copy(&self, text: &str) -> Result<(), String>;
     fn folder(&self, path: &Path) -> Result<(), String>;
+    fn file(&self, path: &Path) -> Result<(), String>;
     fn link(&self, url: &str) -> Result<(), String>;
 }
 #[derive(Default)]
@@ -57,6 +58,23 @@ impl Desktop for NativeDesktop {
                 Err(format!("Desktop opener failed: {status}"))
             }
         }
+    }
+    fn file(&self, path: &Path) -> Result<(), String> {
+        if !path.is_absolute() || !path.is_file() {
+            return Err("Output file is unavailable".into());
+        }
+        #[cfg(target_os = "windows")]
+        let mut command = std::process::Command::new("explorer.exe");
+        #[cfg(target_os = "macos")]
+        let mut command = std::process::Command::new("open");
+        #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+        let mut command = std::process::Command::new("xdg-open");
+
+        command
+            .arg(path)
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| error.to_string())
     }
     fn link(&self, url: &str) -> Result<(), String> {
         if ![SITE, SUPPORT, SUPPORT_PIX].contains(&url) {

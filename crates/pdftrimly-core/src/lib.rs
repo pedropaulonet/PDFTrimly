@@ -20,4 +20,6 @@ pub enum CompressionLevel {
     Normal,
     /// More aggressive optimization of eligible images.
     Ultra,
+    /// Maximum reduction of eligible images; visual quality may degrade substantially.
+    Maximum,
 }

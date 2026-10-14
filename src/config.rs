@@ -85,6 +85,7 @@ impl Preferences {
             "fr" => Some(Language::French),
             "es" => Some(Language::Spanish),
             "it" => Some(Language::Italian),
+            "de" => Some(Language::German),
             _ => return Err("Invalid language".into()),
         };
         let theme = match string("theme", "system")?.as_str() {
@@ -97,6 +98,7 @@ impl Preferences {
             "light" => 0,
             "normal" => 1,
             "ultra" => 2,
+            "maximum" => 3,
             _ => return Err("Invalid level".into()),
         };
         let folder = string("folder", "")?;
@@ -125,7 +127,7 @@ impl Preferences {
     fn encode(&self) -> io::Result<String> {
         let language = self
             .language
-            .map(|l| ["en", "pt-BR", "fr", "es", "it"][l as usize])
+            .map(|l| ["en", "pt-BR", "fr", "es", "it", "de"][l as usize])
             .unwrap_or("system");
         let mut table = toml::Table::new();
         table.insert("recursive".into(), self.recursive.into());
@@ -135,7 +137,7 @@ impl Preferences {
             "theme".into(),
             ["system", "light", "dark"][self.theme_index() as usize].into(),
         );
-        let level = ["light", "normal", "ultra"]
+        let level = ["light", "normal", "ultra", "maximum"]
             .get(self.level as usize)
             .ok_or_else(|| io::Error::other("Invalid level"))?;
         table.insert("level".into(), (*level).into());
@@ -220,9 +222,10 @@ mod tests {
             Some(Language::French),
             Some(Language::Spanish),
             Some(Language::Italian),
+            Some(Language::German),
         ] {
             for theme in [Theme::System, Theme::Light, Theme::Dark] {
-                for level in 0..3 {
+                for level in 0..4 {
                     let p = Preferences {
                         language,
                         theme: theme.clone(),
