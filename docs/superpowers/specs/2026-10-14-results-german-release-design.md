@@ -4,10 +4,10 @@
 
 This design covers a proposed PDFTrimly 0.1.2 delivery. The version is a
 working target and must be checked against the repository state before release.
-The work adds clearer measured batch results, German localization, and an
-interactive Bash helper for preparing commits and optionally triggering the
-existing GitHub release workflow. It does not add predicted savings or an
-in-app AppImage updater.
+The work adds clearer measured batch results, German localization, a fourth
+maximum-compression level, and an interactive Bash helper for preparing
+commits and optionally triggering the existing GitHub release workflow. It
+does not add predicted savings or an in-app AppImage updater.
 
 The repository already measures input/output sizes per PDF, shows a per-file
 percentage in the list, shows exact sizes in the selected-file details, and
@@ -29,6 +29,25 @@ No estimate is shown before processing. All displayed figures come from the
 optimizer's `OptimizeReport`. Existing behavior for files with no reduction,
 batch stop, failures, and changing the UI language during a batch is retained.
 
+## Maximum compression level
+
+Keep the existing Light, Normal, and Ultra settings unchanged. Add a separate
+Maximum level that uses 72 DPI and JPEG quality 40 for eligible images, below
+Ultra's current 96 DPI and quality 60. The interface and CLI must identify this
+as the most aggressive lossy option and warn that small text in scans may
+become difficult to read. Use the same image eligibility analysis, decoding
+bounds, output validation, and candidate-size safeguards as Ultra. Preserve
+unsupported image data and never overwrite the source. If the candidate does
+not produce material savings, preserve the existing unchanged-output behavior.
+
+Expose Maximum in the GUI compression selector, settings default, CLI
+`--level` parser/help, and every supported language. Keep Normal as the default
+for existing users and existing configuration files. Update the image
+optimization guide with the level parameters and document that its output can
+have significant visual degradation. Verification should compare output size,
+rendered legibility of small scan text, and preserved searchable/OCR text; no
+minimum savings percentage is promised for arbitrary PDFs.
+
 ## German localization
 
 Add German (`de`) as a first-class language throughout the application:
@@ -39,7 +58,8 @@ Add German (`de`) as a first-class language throughout the application:
 - Preserve the existing catalog index ordering by appending German after
   Italian.
 - Add a German output-name suffix and update the localization guide and
-  automated catalog/locale/config/CLI coverage.
+  automated catalog/locale/config/CLI coverage. Translate the new Maximum
+  level and its quality warning in all catalogs as part of the same change.
 
 The catalog is a complete draft and should receive native-speaker review
 before public release. This review is a release-quality caveat, not a reason to
@@ -81,6 +101,9 @@ publish assets itself or create a second release-note source.
 - Keep German catalog lookup behind `Language` and the existing embedded TOML
   catalog validation. Add German to configuration serialization without
   changing the preferences schema version.
+- Keep all compression modes in the independent core enum and pass the new
+  mode through the existing options/config/CLI boundaries. Do not add GUI
+  dependencies to the core.
 - Keep release orchestration in a standalone maintainer script. It may invoke
   GitHub CLI, but PDF processing remains local and the desktop app gains no
   network behavior.
@@ -114,6 +137,10 @@ design.
 - Check per-file row rendering for successful, unchanged, failed, and stopped
   entries at narrow and normal window sizes; verify detail paths and aggregate
   totals still use measured successful results.
+- Check that Maximum only replaces eligible image data, respects resource
+  bounds, keeps searchable/OCR text, produces structurally valid PDFs, and
+  leaves sources untouched. Render representative synthetic scan pages and
+  inspect small text for the documented quality warning.
 - Validate every catalog key and placeholder, German locale normalization,
   persisted preference round trips, CLI help/errors/results, language changes
   after a batch, and the German output suffix.
